@@ -28,10 +28,23 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return
 
     def CreateFeedback(self, request, context):
-        return
+        feedback = request.feedback.feedback
+        if feedback == "":
+            return common.Result(is_ok=False, description="The feedback is empty")
+        new_feedback = t.Feedback(
+            id=request.feedback.id, event_id=request.feedback.event_id, feedback=feedback)
+        session.add(new_feedback)
+        session.commit()
+        return common.Result(is_ok=True, description="The feedback is recieved")
 
     def RemoveFeedback(self, request, context):
-        return
+        feedback_id = request.feedback.id
+        feedback = session.query(t.Feedback).get(feedback_id)
+        if (feedback):
+            session.delete(feedback)
+            session.commit()
+            return common.Result(is_ok=True, description="The feedback is deleted")
+        return common.Result(is_ok=False, description="No feedback found")
 
     def SearchEventsByName(self, request, context):
         return
