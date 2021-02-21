@@ -52,7 +52,13 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return participant_service.SearchEventsByNameRespond(events=data)
 
     def GenerateQR(self, request, context):
-        return
+        param = request.user_event
+
+        user_event = {"id": param.id, "user_id": param.user_id,
+                      "event_id": param.event_id}
+        string_user_event = str(user_event)
+
+        return participant_service.GenerateQRRespond(data=string_user_event)
 
 
 def serve():
