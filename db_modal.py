@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, ForeignKey, Integer, String
+from sqlalchemy import create_engine, Column, ForeignKey, Integer, String, TIMESTAMP
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -17,6 +17,14 @@ class Feedback(Base):
     id = Column(Integer, primary_key=True)
     event_id = Column(Integer, ForeignKey("event.id"))
     feedback = Column(String)
+
+
+class EventDuration(Base):
+    __tablename__ = 'event_duration'
+    id = Column(Integer, primary_key=True)
+    event_id = Column(Integer)
+    start = Column(TIMESTAMP)
+    end = Column(TIMESTAMP)
 
 
 Base.metadata.create_all(engine)

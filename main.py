@@ -6,13 +6,22 @@ import hts.common.common_pb2 as common
 import hts.participant.service_pb2 as participant_service
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
-from db_modal import Feedback, Event, session
+from db_modal import Feedback, Event, EventDuration, session
+import datetime
 
 
 class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
     def IsEventAvailable(self, request, context):
-        return
+        event_id = request.event.id
+        now = datetime.datetime.now()
+
+        result = session.query(EventDuration).filter(
+            EventDuration.id == event_id).scalar()
+
+        if(result.start > now):
+            return common.Result(is_ok=True, description="The event haven't start yet")
+        return common.Result(is_ok=False, description="The event has already started")
 
     def JoinEvent(self, request, context):
         return
@@ -53,7 +62,6 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
     def GenerateQR(self, request, context):
         param = request.user_event
-
         user_event = {"id": param.id, "user_id": param.user_id,
                       "event_id": param.event_id}
         string_user_event = str(user_event)
