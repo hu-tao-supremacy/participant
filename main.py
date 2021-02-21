@@ -4,6 +4,7 @@ import logging
 import grpc
 import hts.common.common_pb2 as common
 import hts.participant.service_pb2 as participant_service
+from sqlalchemy.ext.declarative import declarative_base
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
 from sqlalchemy import create_engine
@@ -11,9 +12,11 @@ from sqlalchemy.orm import sessionmaker
 
 import db_entity as t
 
-engine = create_engine('sqlite:///main.db')
+engine = create_engine('postgresql://hu-tao-mains:hu-tao-mains@localhost/hts')
+base = declarative_base()
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+base.metadata.create_all(engine)
 
 
 class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
