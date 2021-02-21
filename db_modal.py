@@ -9,6 +9,7 @@ engine = create_engine('postgresql://hu-tao-mains:hu-tao-mains@localhost/hts')
 class Event(Base):
     __tablename__ = 'event'
     id = Column(Integer, primary_key=True)
+    name = Column(String)
 
 
 class Feedback(Base):

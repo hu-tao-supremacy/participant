@@ -4,10 +4,9 @@ import logging
 import grpc
 import hts.common.common_pb2 as common
 import hts.participant.service_pb2 as participant_service
-from sqlalchemy.ext.declarative import declarative_base
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
-from db_modal import Feedback, session
+from db_modal import Feedback, Event, session
 
 
 class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
@@ -41,7 +40,16 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return common.Result(is_ok=False, description="No feedback found")
 
     def SearchEventsByName(self, request, context):
-        return
+        text = request.name
+        if(text == ""):
+            return common.Result(is_ok=False, description="Empty String")
+        results = session.query(Event).filter(Event.name.contains(text))
+
+        # TODO: - Change to real data
+        data = map(lambda result: common.Event(id=result.id, organization_id=1, event_location_id=None, description="a", name=result.name,
+                                               cover_image=None, cover_image_hash=None, poster_image=None, poster_image_hash=None, contact="231"), results)
+
+        return participant_service.SearchEventsByNameRespond(events=data)
 
     def GenerateQR(self, request, context):
         return
