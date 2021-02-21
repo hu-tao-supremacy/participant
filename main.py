@@ -7,16 +7,7 @@ import hts.participant.service_pb2 as participant_service
 from sqlalchemy.ext.declarative import declarative_base
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-import db_entity as t
-
-engine = create_engine('postgresql://hu-tao-mains:hu-tao-mains@localhost/hts')
-base = declarative_base()
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
-base.metadata.create_all(engine)
+from db_modal import Feedback, session
 
 
 class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
@@ -34,7 +25,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         feedback = request.feedback.feedback
         if feedback == "":
             return common.Result(is_ok=False, description="The feedback is empty")
-        new_feedback = t.Feedback(
+        new_feedback = Feedback(
             id=request.feedback.id, event_id=request.feedback.event_id, feedback=feedback)
         session.add(new_feedback)
         session.commit()
@@ -42,7 +33,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
     def RemoveFeedback(self, request, context):
         feedback_id = request.feedback.id
-        feedback = session.query(t.Feedback).get(feedback_id)
+        feedback = session.query(Feedback).get(feedback_id)
         if (feedback):
             session.delete(feedback)
             session.commit()
