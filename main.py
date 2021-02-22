@@ -6,7 +6,7 @@ import hts.common.common_pb2 as common
 import hts.participant.service_pb2 as participant_service
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
-from db_model import Feedback, Event, EventDuration, session
+from db_model import Feedback, Event, EventDuration, UserEvent, session
 import datetime
 
 
@@ -24,7 +24,20 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return common.Result(is_ok=False, description="The event has already started")
 
     def JoinEvent(self, request, context):
-        return
+        user_id = request.user.id
+        event_id = request.event.id
+
+        results = session.query(UserEvent).filter(
+            UserEvent.user_id == user_id, UserEvent.event_id == event_id)
+
+        if (results.scalar()):
+            return common.Result(is_ok=False, description="User has already joined")
+
+
+        new_user_event = UserEvent(user_id=user_id, event_id=event_id)
+        session.add(new_user_event)
+        session.commit()
+        return common.Result(is_ok=True, description="User successfully join the event")
 
     def CancelEvent(self, request, context):
         return

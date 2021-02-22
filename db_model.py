@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, ForeignKey, Integer, String, TIMESTAMP
+from sqlalchemy import create_engine, Column, ForeignKey, Integer, String, TIMESTAMP, Boolean, Enum
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -34,6 +34,25 @@ class EventDuration(Base):
     event_id = Column(Integer)
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
+
+
+class UserEvent(Base):
+    __tablename__ = 'user_event'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id"))
+    event_id = Column(Integer, ForeignKey("event.id"))
+
+
+class User(Base):
+    __tablename__ = 'user'
+    id = Column(Integer, primary_key=True)
+    first_name = Column(String)
+    last_name = Column(String)
+    email = Column(String)
+    nickname = Column(String, nullable=True)
+    chula_id = Column(String, nullable=True)
+    is_chula_student = Column(Boolean)
+    gender = Column(Enum("M", "F", "NS", name="gender_enum", create_type=False))
 
 
 Base.metadata.create_all(engine)
