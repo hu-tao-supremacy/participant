@@ -52,7 +52,8 @@ class User(Base):
     nickname = Column(String, nullable=True)
     chula_id = Column(String, nullable=True)
     is_chula_student = Column(Boolean)
-    gender = Column(Enum("M", "F", "NS", name="gender_enum", create_type=False))
+    gender = Column(
+        Enum("M", "F", "NS", name="gender_enum", create_type=False))
 
 
 Base.metadata.create_all(engine)
