@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import os
 
-base = os.path.dirname(__file__)
+base = pathlib.Path(__file__).parent.absolute()
 
 os.chdir(base)
 
