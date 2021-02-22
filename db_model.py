@@ -9,7 +9,16 @@ engine = create_engine('postgresql://hu-tao-mains:hu-tao-mains@localhost/hts')
 class Event(Base):
     __tablename__ = 'event'
     id = Column(Integer, primary_key=True)
+    organization_id = Column(Integer, ForeignKey("organization.id"))
+    event_location_id = Column(Integer, ForeignKey(
+        "event_location.id"), nullable=True)
+    description = Column(String)
     name = Column(String)
+    cover_image = Column(String, nullable=True)
+    cover_image_hash = Column(String, nullable=True)
+    poster_image = Column(String, nullable=True)
+    poster_image_hash = Column(String, nullable=True)
+    contact = Column(String)
 
 
 class Feedback(Base):
