@@ -6,7 +6,7 @@ import hts.common.common_pb2 as common
 import hts.participant.service_pb2 as participant_service
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
-from db_modal import Feedback, Event, EventDuration, session
+from db_model import Feedback, Event, EventDuration, session
 import datetime
 
 
@@ -34,7 +34,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         if feedback == "":
             return common.Result(is_ok=False, description="The feedback is empty")
         new_feedback = Feedback(
-            id=request.feedback.id, event_id=request.feedback.event_id, feedback=feedback)
+            event_id=request.feedback.event_id, feedback=feedback)
         session.add(new_feedback)
         session.commit()
         return common.Result(is_ok=True, description="The feedback is recieved")
@@ -50,13 +50,14 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
     def SearchEventsByName(self, request, context):
         text = request.name
+        print(text)
         if(text == ""):
-            return common.Result(is_ok=False, description="Empty String")
+            print("asdf")
+            return participant_service.SearchEventsByNameRespond(events=None)
         results = session.query(Event).filter(Event.name.contains(text))
 
-        # TODO: - Change to real data
-        data = map(lambda result: common.Event(id=result.id, organization_id=1, event_location_id=None, description="a", name=result.name,
-                                               cover_image=None, cover_image_hash=None, poster_image=None, poster_image_hash=None, contact="231"), results)
+        data = map(lambda result: common.Event(id=result.id, organization_id=result.organization_id, event_location_id=result.event_location_id, description=result.description, name=result.name,
+                                               cover_image=result.cover_image, cover_image_hash=result.cover_image_hash, poster_image=result.poster_image, poster_image_hash=result.poster_image_hash, contact=result.contact), results)
 
         return participant_service.SearchEventsByNameRespond(events=data)
 
