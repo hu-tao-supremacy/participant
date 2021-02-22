@@ -33,14 +33,24 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         if (results.scalar()):
             return common.Result(is_ok=False, description="User has already joined")
 
-
         new_user_event = UserEvent(user_id=user_id, event_id=event_id)
         session.add(new_user_event)
         session.commit()
         return common.Result(is_ok=True, description="User successfully join the event")
 
     def CancelEvent(self, request, context):
-        return
+        user_id = request.user.id
+        event_id = request.event.id
+
+        results = session.query(UserEvent).filter(
+            UserEvent.user_id == user_id, UserEvent.event_id == event_id).scalar()
+
+        if (results):
+            session.delete(results)
+            session.commit()
+            return common.Result(is_ok=True, description="Successfully cancel")
+
+        return common.Result(is_ok=False, description="Cannot find event to cancel")
 
     def CreateFeedback(self, request, context):
         feedback = request.feedback.feedback
