@@ -11,6 +11,6 @@ jobs:
       - uses: peter-evans/repository-dispatch@v1
         with:
           token: ${{ secrets.DODOCO_BOT_PAT }}
-          repository: hu-tao-supremacy/deployments
+          repository: hu-tao-supremacy/deploys
           event-type: request-build
           client-payload: '{ "repository": "${{ github.repository }}", "ref": "${{ github.ref }}", "sha": "${{ github.sha }}" }'
