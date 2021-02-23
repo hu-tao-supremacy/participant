@@ -1,5 +1,6 @@
 from concurrent import futures
 import logging
+import os
 
 import grpc
 import hts.common.common_pb2 as common
@@ -93,11 +94,14 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return participant_service.GenerateQRRespond(data=string_user_event)
 
 
+port = os.environ["POSTGRES_PORT"]
+
+
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     participant_service_grpc.add_ParticipantServiceServicer_to_server(
         ParticipantService(), server)
-    server.add_insecure_port('[::]:50051')
+    server.add_insecure_port('[::]:'+port)
     server.start()
     server.wait_for_termination()
 
