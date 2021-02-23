@@ -1,9 +1,16 @@
 from sqlalchemy import create_engine, Column, ForeignKey, Integer, String, TIMESTAMP, Boolean, Enum
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import os
 
 Base = declarative_base()
-engine = create_engine('postgresql://hu-tao-mains:hu-tao-mains@localhost/hts')
+
+user = os.environ["POSTGRES_USER"]
+password = os.environ["POSTGRES_PASSWORD"]
+host = os.environ["POSTGRES_HOST"]
+db = os.environ["POSTGRES_DB"]
+
+engine = create_engine('postgresql://'+user+':'+password+'@'+host+'/'+db)
 
 
 class Event(Base):
