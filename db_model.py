@@ -5,10 +5,10 @@ import os
 
 Base = declarative_base()
 
-user = os.environ["POSTGRES_USER"]
-password = os.environ["POSTGRES_PASSWORD"]
-host = os.environ["POSTGRES_HOST"]
-db = os.environ["POSTGRES_DB"]
+user = os.environ.get("POSTGRES_USER")
+password = os.environ.get("POSTGRES_PASSWORD")
+host = os.environ.get("POSTGRES_HOST")
+db = os.environ.get("POSTGRES_DB")
 
 engine = create_engine('postgresql://'+user+':'+password+'@'+host+'/'+db)
 

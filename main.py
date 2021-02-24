@@ -94,7 +94,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return participant_service.GenerateQRRespond(data=string_user_event)
 
 
-port = os.environ["POSTGRES_PORT"]
+port = os.environ.get("GRPC_PORT")
 
 
 def serve():
