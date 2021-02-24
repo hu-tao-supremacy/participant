@@ -29,7 +29,7 @@ class Event(Base):
 
 
 class Feedback(Base):
-    __tablename__ = 'feedback'
+    __tablename__ = 'event_feedback'
     id = Column(Integer, primary_key=True)
     event_id = Column(Integer, ForeignKey("event.id"))
     feedback = Column(String)
