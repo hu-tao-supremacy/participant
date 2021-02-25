@@ -63,6 +63,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         session.commit()
         return common.Result(is_ok=True, description="The feedback is recieved")
 
+    def HasSubmitFeedback(self, request, context):
+        return
+
     def RemoveFeedback(self, request, context):
         feedback_id = request.id
         feedback = session.query(Feedback).get(feedback_id)
@@ -71,6 +74,12 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             session.commit()
             return common.Result(is_ok=True, description="The feedback is deleted")
         return common.Result(is_ok=False, description="No feedback found")
+
+    def GetFeedbackFromEvent(self, request, context):
+        return
+
+    def GetUserFeedbackFromEvent(self, request, context):
+        return
 
     def SearchEventsByName(self, request, context):
         text = request.text
@@ -85,6 +94,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
         return participant_service.SearchEventsByNameRespond(events=data)
 
+    def SearchEventsByTag(self, request, context):
+        return
+
     def GenerateQR(self, request, context):
         user_event = {"id": request.id, "user_id": request.user_id,
                       "event_id": request.event_id}
@@ -92,7 +104,13 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
         return participant_service.GenerateQRRespond(data=string_user_event)
 
-    def GetAllEvent(self, request, context):
+    def GetEvent(self, request, context):
+        return
+
+    def GetSuggestedEvents(self, request, context):
+        return
+
+    def GetAllEvents(self, request, context):
         events = session.query(Event).all()
         return participant_service.EventsResponse(event=events)
 
