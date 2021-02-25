@@ -14,7 +14,7 @@ import datetime
 class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
     def IsEventAvailable(self, request, context):
-        event_id = request.event.id
+        event_id = request.id
         now = datetime.datetime.now()
 
         result = session.query(EventDuration).filter(
@@ -64,7 +64,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return common.Result(is_ok=True, description="The feedback is recieved")
 
     def RemoveFeedback(self, request, context):
-        feedback_id = request.feedback.id
+        feedback_id = request.id
         feedback = session.query(Feedback).get(feedback_id)
         if (feedback):
             session.delete(feedback)
@@ -73,7 +73,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return common.Result(is_ok=False, description="No feedback found")
 
     def SearchEventsByName(self, request, context):
-        text = request.name
+        text = request.text
         print(text)
         if(text == ""):
             print("asdf")
@@ -86,9 +86,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return participant_service.SearchEventsByNameRespond(events=data)
 
     def GenerateQR(self, request, context):
-        param = request.user_event
-        user_event = {"id": param.id, "user_id": param.user_id,
-                      "event_id": param.event_id}
+        user_event = {"id": request.id, "user_id": request.user_id,
+                      "event_id": request.event_id}
         string_user_event = str(user_event)
 
         return participant_service.GenerateQRRespond(data=string_user_event)
