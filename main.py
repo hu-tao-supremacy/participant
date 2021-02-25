@@ -93,6 +93,10 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
         return participant_service.GenerateQRRespond(data=string_user_event)
 
+    def GetAllEvent(self, request, context):
+        events = session.query(Event).all()
+        return participant_service.EventsResponse(event=events)
+
 
 port = os.environ.get("GRPC_PORT")
 
