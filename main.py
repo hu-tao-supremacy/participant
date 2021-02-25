@@ -83,16 +83,14 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
     def SearchEventsByName(self, request, context):
         text = request.text
-        print(text)
         if(text == ""):
-            print("asdf")
-            return participant_service.SearchEventsByNameRespond(events=None)
+            return participant_service.EventsResponse(event=None)
         results = session.query(Event).filter(Event.name.contains(text))
 
-        data = map(lambda result: common.Event(id=result.id, organization_id=result.organization_id, event_location_id=result.event_location_id, description=result.description, name=result.name,
-                                               cover_image=result.cover_image, cover_image_hash=result.cover_image_hash, poster_image=result.poster_image, poster_image_hash=result.poster_image_hash, contact=result.contact), results)
+        events = map(lambda result: common.Event(id=result.id, organization_id=result.organization_id, event_location_id=None, description=result.description, name=result.name,
+                                                 cover_image=result.cover_image, cover_image_hash=result.cover_image_hash, poster_image=result.poster_image, poster_image_hash=result.poster_image_hash, contact=result.contact), results)
 
-        return participant_service.SearchEventsByNameRespond(events=data)
+        return participant_service.EventsResponse(event=events)
 
     def SearchEventsByTag(self, request, context):
         return
@@ -111,8 +109,11 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return
 
     def GetAllEvents(self, request, context):
-        events = session.query(Event).all()
-        return participant_service.EventsResponse(event=events)
+        events = session.query(Event)
+        data = map(lambda result: common.Event(id=result.id, organization_id=result.organization_id, event_location_id=None, description=result.description, name=result.name,
+                                               cover_image=result.cover_image, cover_image_hash=result.cover_image_hash, poster_image=result.poster_image, poster_image_hash=result.poster_image_hash, contact=result.contact), events)
+
+        return participant_service.EventsResponse(event=data)
 
 
 port = os.environ.get("GRPC_PORT")
