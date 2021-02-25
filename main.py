@@ -103,7 +103,12 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return participant_service.GenerateQRRespond(data=string_user_event)
 
     def GetEvent(self, request, context):
-        return
+        event = session.query(Event).filter(
+            Event.id == request.event_id).scalar()
+        data = common.Event(id=event.id, organization_id=event.organization_id, event_location_id=None, description=event.description, name=event.name,
+                            cover_image=event.cover_image, cover_image_hash=event.cover_image_hash, poster_image=event.poster_image, poster_image_hash=event.poster_image_hash, contact=event.contact)
+
+        return data
 
     def GetSuggestedEvents(self, request, context):
         return
