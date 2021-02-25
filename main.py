@@ -105,10 +105,11 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
     def GetEvent(self, request, context):
         event = session.query(Event).filter(
             Event.id == request.event_id).scalar()
-        data = common.Event(id=event.id, organization_id=event.organization_id, event_location_id=None, description=event.description, name=event.name,
-                            cover_image=event.cover_image, cover_image_hash=event.cover_image_hash, poster_image=event.poster_image, poster_image_hash=event.poster_image_hash, contact=event.contact)
-
-        return data
+        if (event is not None):
+            data = common.Event(id=event.id, organization_id=event.organization_id, event_location_id=None, description=event.description, name=event.name,
+                                cover_image=event.cover_image, cover_image_hash=event.cover_image_hash, poster_image=event.poster_image, poster_image_hash=event.poster_image_hash, contact=event.contact)
+            return data
+        return common.Event()
 
     def GetSuggestedEvents(self, request, context):
         return
