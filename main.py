@@ -9,6 +9,7 @@ import hts.participant.service_pb2_grpc as participant_service_grpc
 
 from db_model import Feedback, Event, EventDuration, UserEvent, session
 import datetime
+from google.protobuf import wrappers_pb2 as wrapper
 
 
 class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
@@ -116,9 +117,14 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
     def GetAllEvents(self, request, context):
         events = session.query(Event)
-        data = map(lambda result: common.Event(id=result.id, organization_id=result.organization_id, event_location_id=None, description=result.description, name=result.name,
-                                               cover_image=result.cover_image, cover_image_hash=result.cover_image_hash, poster_image=result.poster_image, poster_image_hash=result.poster_image_hash, contact=result.contact), events)
 
+        def getInt64Value(value):
+            temp = wrapper.Int64Value()
+            temp.value = value
+            return temp
+
+        data = map(lambda result: common.Event(id=result.id, organization_id=result.organization_id, event_location_id=getInt64Value(result.event_location_id), description=result.description, name=result.name,
+                                               cover_image=result.cover_image, cover_image_hash=result.cover_image_hash, poster_image=result.poster_image, poster_image_hash=result.poster_image_hash, contact=result.contact), events)
         return participant_service.EventsResponse(event=data)
 
 
