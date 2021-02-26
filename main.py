@@ -100,7 +100,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                       "event_id": request.event_id}
         string_user_event = str(user_event)
 
-        return participant_service.GenerateQRRespond(data=string_user_event)
+        return participant_service.GenerateQRResponse(data=string_user_event)
 
     def GetEvent(self, request, context):
         event = session.query(Event).filter(
