@@ -24,6 +24,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             EventDuration.id == event_id).scalar()
 
         if(result.start > now):
+            # - Change feedback to return event
             return common.Result(is_ok=True, description="The event haven't start yet")
         return common.Result(is_ok=False, description="The event has already started")
 
@@ -40,6 +41,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         new_user_event = UserEvent(user_id=user_id, event_id=event_id)
         session.add(new_user_event)
         session.commit()
+
+        # - Change return type to event
         return common.Result(is_ok=True, description="User successfully join the event")
 
     def CancelEvent(self, request, context):
@@ -54,6 +57,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             session.commit()
             return common.Result(is_ok=True, description="Successfully cancel")
 
+        # - change return type to event
         return common.Result(is_ok=False, description="Cannot find event to cancel")
 
     def CreateFeedback(self, request, context):
@@ -64,6 +68,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             event_id=request.feedback.event_id, feedback=feedback)
         session.add(new_feedback)
         session.commit()
+
+        # - change return type
         return common.Result(is_ok=True, description="The feedback is recieved")
 
     def HasSubmitFeedback(self, request, context):
@@ -75,6 +81,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         if (feedback):
             session.delete(feedback)
             session.commit()
+            # - change return type
             return common.Result(is_ok=True, description="The feedback is deleted")
         return common.Result(is_ok=False, description="No feedback found")
 
