@@ -9,6 +9,7 @@ import hts.participant.service_pb2_grpc as participant_service_grpc
 
 from db_model import Feedback, Event, EventDuration, UserEvent, session
 import datetime
+import random
 from google.protobuf import wrappers_pb2 as wrapper
 
 
@@ -115,7 +116,20 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return common.Event()
 
     def GetSuggestedEvents(self, request, context):
-        return
+
+        def getRandomNumber():
+            return round(random.random() * 100)
+
+        events = []
+
+        for i in range(0, 10):
+            event = session.query(Event).filter(
+                Event.id == getRandomNumber()).scalar()
+            if (event is not None):
+                events.append(common.Event(id=event.id, organization_id=event.organization_id, event_location_id=None, description=event.description, name=event.name,
+                                           cover_image=event.cover_image, cover_image_hash=event.cover_image_hash, poster_image=event.poster_image, poster_image_hash=event.poster_image_hash, contact=event.contact))
+
+        return participant_service.EventsResponse(event=events)
 
     def GetAllEvents(self, request, context):
         events = session.query(Event)
