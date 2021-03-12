@@ -94,6 +94,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return participant_service.EventsResponse(event=events)
 
     def SearchEventsByTag(self, request, context):
+        # text = request.text
+        # results = session.query(Tag).get()
         return
 
     def GenerateQR(self, request, context):

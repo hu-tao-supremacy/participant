@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, ForeignKey, Integer, String, TIMESTAMP, Boolean, Enum
+from sqlalchemy import create_engine, Column, ForeignKey, Integer, String, TIMESTAMP, Boolean, Enum, BigInteger
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
@@ -17,7 +17,7 @@ class Event(Base):
     __tablename__ = 'event'
     id = Column(Integer, primary_key=True)
     organization_id = Column(Integer, ForeignKey("organization.id"))
-    event_location_id = Column(Integer, ForeignKey(
+    event_location_id = Column(BigInteger, ForeignKey(
         "event_location.id"), nullable=True)
     description = Column(String)
     name = Column(String)
@@ -61,6 +61,12 @@ class User(Base):
     is_chula_student = Column(Boolean)
     gender = Column(
         Enum("M", "F", "NS", name="gender_enum", create_type=False))
+
+
+# class Tag(Base):
+#     __tablename__ = "tag"
+#     id = Column(Integer, primary=True)
+#     name = Column(String)
 
 
 Base.metadata.create_all(engine)
