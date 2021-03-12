@@ -95,7 +95,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         text = request.text.lower()
         if(text == ""):
             return participant_service.EventsResponse(event=None)
-        results = session.query(Event).filter(func.lower(Event.name).contains(text))
+        results = session.query(Event).filter(
+            func.lower(Event.name).contains(text))
 
         events = map(lambda result: common.Event(id=result.id, organization_id=result.organization_id, event_location_id=None, description=result.description, name=result.name,
                                                  cover_image=result.cover_image, cover_image_hash=result.cover_image_hash, poster_image=result.poster_image, poster_image_hash=result.poster_image_hash, contact=result.contact), results)
@@ -123,7 +124,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 Event.id == event_id).scalar()
             if (event is not None):
                 tag_events.append(common.Event(id=event.id, organization_id=event.organization_id, event_location_id=None, description=event.description, name=event.name,
-                                           cover_image=event.cover_image, cover_image_hash=event.cover_image_hash, poster_image=event.poster_image, poster_image_hash=event.poster_image_hash, contact=event.contact))
+                                               cover_image=event.cover_image, cover_image_hash=event.cover_image_hash, poster_image=event.poster_image, poster_image_hash=event.poster_image_hash, contact=event.contact))
 
         if (tag_events):
             return participant_service.EventsResponse(event=tag_events)
@@ -139,11 +140,6 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
     def GetEvent(self, request, context):
         event = session.query(Event).filter(
             Event.id == request.event_id).scalar()
-        
-        def getInt64Value(value):
-            temp = wrapper.Int64Value()
-            temp.value = value
-            return temp
 
         if (event is not None):
             data = common.Event(id=event.id, organization_id=event.organization_id, event_location_id=getInt64Value(event.event_location_id), description=event.description, name=event.name,
@@ -162,7 +158,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             event = session.query(Event).filter(
                 Event.id == getRandomNumber()).scalar()
             if (event is not None):
-                events.append(common.Event(id=event.id, organization_id=event.organization_id, event_location_id=None, description=event.description, name=event.name,
+                events.append(common.Event(id=event.id, organization_id=event.organization_id, event_location_id=getInt64Value(event.event_location_id), description=event.description, name=event.name,
                                            cover_image=event.cover_image, cover_image_hash=event.cover_image_hash, poster_image=event.poster_image, poster_image_hash=event.poster_image_hash, contact=event.contact))
 
         return participant_service.EventsResponse(event=events)
@@ -170,14 +166,15 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
     def GetAllEvents(self, request, context):
         events = session.query(Event)
 
-        def getInt64Value(value):
-            temp = wrapper.Int64Value()
-            temp.value = value
-            return temp
-
         data = map(lambda result: common.Event(id=result.id, organization_id=result.organization_id, event_location_id=getInt64Value(result.event_location_id), description=result.description, name=result.name,
                                                cover_image=result.cover_image, cover_image_hash=result.cover_image_hash, poster_image=result.poster_image, poster_image_hash=result.poster_image_hash, contact=result.contact), events)
         return participant_service.EventsResponse(event=data)
+
+
+def getInt64Value(value):
+    temp = wrapper.Int64Value()
+    temp.value = value
+    return temp
 
 
 port = os.environ.get("GRPC_PORT")
