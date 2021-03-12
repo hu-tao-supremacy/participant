@@ -8,6 +8,7 @@ import hts.participant.service_pb2 as participant_service
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
 from db_model import Feedback, Event, EventDuration, UserEvent, session, Tag, EventTag
+from sqlalchemy import func
 import datetime
 import random
 from google.protobuf import wrappers_pb2 as wrapper
@@ -84,10 +85,10 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return
 
     def SearchEventsByName(self, request, context):
-        text = request.text
+        text = request.text.lower()
         if(text == ""):
             return participant_service.EventsResponse(event=None)
-        results = session.query(Event).filter(Event.name.contains(text))
+        results = session.query(Event).filter(func.lower(Event.name).contains(text))
 
         events = map(lambda result: common.Event(id=result.id, organization_id=result.organization_id, event_location_id=None, description=result.description, name=result.name,
                                                  cover_image=result.cover_image, cover_image_hash=result.cover_image_hash, poster_image=result.poster_image, poster_image_hash=result.poster_image_hash, contact=result.contact), results)
