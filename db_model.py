@@ -63,10 +63,16 @@ class User(Base):
         Enum("M", "F", "NS", name="gender_enum", create_type=False))
 
 
-# class Tag(Base):
-#     __tablename__ = "tag"
-#     id = Column(Integer, primary=True)
-#     name = Column(String)
+class Tag(Base):
+    __tablename__ = "tag"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+
+class EventTag(Base):
+    __tablename__ = "event_tag"
+    id = Column(Integer, primary_key=True)
+    event_id = Column(Integer)
+    tag_id = Column(Integer)
 
 
 Base.metadata.create_all(engine)
