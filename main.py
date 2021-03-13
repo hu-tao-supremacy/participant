@@ -112,7 +112,15 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return proto_pb2.Response()
 
     def GetFeedbacksFromEvent(self, request, context):
-        return
+        event_id = request.id
+
+        feedbacks = session.query(Feedback).filter(
+            Feedback.event_id == event_id).all()
+
+        print(feedbacks)
+        data = map(lambda result: common.EventFeedback(id=result.id, event_id=result.event_id, feedback=result.feedback), feedbacks)
+
+        return participant_service.GetFeedbacksFromEventResponse(event_feedback=data)
 
     def GetUserFeedbackFromEvent(self, request, context):
         return
