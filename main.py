@@ -12,6 +12,8 @@ from helper import getInt64Value, b64encode
 from sqlalchemy import func
 import datetime
 import random
+import pytz
+
 
 
 class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
@@ -19,11 +21,12 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
     def IsEventAvailable(self, request, context):
         # TODO: - doesn't work
         event_id = request.id
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
 
         result = session.query(EventDuration).filter(
             EventDuration.id == event_id).scalar()
-
+        print(result.start)
+        print(now)
         if(result.start > now):
             return common.Result(is_ok=True, description="The event haven't start yet")
         return common.Result(is_ok=False, description="The event has already started")
