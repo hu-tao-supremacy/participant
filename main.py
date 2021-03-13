@@ -8,7 +8,7 @@ import hts.participant.service_pb2 as participant_service
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
 from db_model import Feedback, Event, EventDuration, UserEvent, session, Tag, EventTag
-from helper import getInt64Value
+from helper import getInt64Value, b64encode
 from sqlalchemy import func
 import datetime
 import random
@@ -132,7 +132,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
     def GenerateQR(self, request, context):
         user_event = {"id": request.id, "user_id": request.user_id,
                       "event_id": request.event_id}
-        string_user_event = str(user_event)
+        string_user_event = b64encode(str(user_event))
 
         return participant_service.GenerateQRResponse(data=string_user_event)
 
