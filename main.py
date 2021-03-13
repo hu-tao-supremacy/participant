@@ -90,14 +90,6 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
         return common.EventFeedback(id=new_feedback.id, event_id=new_feedback.event_id, feedback=new_feedback.feedback)
 
-    def HasSubmitFeedback(self, request, context):
-        user_id = request.user.id
-        event_id = request.event.id
-
-        # user_event_feedback = session
-
-        return
-
     def RemoveFeedback(self, request, context):
         feedback_id = request.id
         feedback = session.query(Feedback).get(feedback_id)
