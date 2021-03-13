@@ -8,11 +8,10 @@ import hts.participant.service_pb2 as participant_service
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
 from db_model import Feedback, Event, EventDuration, UserEvent, session, Tag, EventTag
+from helper import getInt64Value
 from sqlalchemy import func
 import datetime
 import random
-from google.protobuf import wrappers_pb2 as wrapper
-
 
 class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
@@ -169,12 +168,6 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         data = map(lambda result: common.Event(id=result.id, organization_id=result.organization_id, event_location_id=getInt64Value(result.event_location_id), description=result.description, name=result.name,
                                                cover_image=result.cover_image, cover_image_hash=result.cover_image_hash, poster_image=result.poster_image, poster_image_hash=result.poster_image_hash, contact=result.contact), events)
         return participant_service.EventsResponse(event=data)
-
-
-def getInt64Value(value):
-    temp = wrapper.Int64Value()
-    temp.value = value
-    return temp
 
 
 port = os.environ.get("GRPC_PORT")
