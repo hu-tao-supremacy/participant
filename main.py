@@ -70,7 +70,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
     def CreateFeedback(self, request, context):
         # TODO: - Only 1 user 1 feedback
+        user_id = request.user.id
         feedback = request.feedback.feedback
+
         if feedback == "":
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details("No feedback given.")
@@ -81,11 +83,16 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         session.add(new_feedback)
         session.commit()
 
+        new_user_event_feedback = UserEventFeedback(
+            user_id=user_id, event_feedback_id=new_feedback.id)
+        session.add(new_user_event_feedback)
+        session.commit()
+
         return common.EventFeedback(id=new_feedback.id, event_id=new_feedback.event_id, feedback=new_feedback.feedback)
 
     def HasSubmitFeedback(self, request, context):
-        # user_id = request.user.id
-        # event_id = request.event.id
+        user_id = request.user.id
+        event_id = request.event.id
 
         # user_event_feedback = session
 

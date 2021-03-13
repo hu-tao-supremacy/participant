@@ -77,8 +77,8 @@ class EventTag(Base):
 class UserEventFeedback(Base):
     __tablename__ = "user_event_feedback"
     id = Column(Integer, primary_key=True)
-    event_id = Column(Integer)
-    user_feedback_id = Column(Integer)
+    user_id = Column(Integer)
+    event_feedback_id = Column(Integer)
 
 
 Base.metadata.create_all(engine)
