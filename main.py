@@ -117,13 +117,24 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         feedbacks = session.query(Feedback).filter(
             Feedback.event_id == event_id).all()
 
-        print(feedbacks)
         data = map(lambda result: common.EventFeedback(id=result.id, event_id=result.event_id, feedback=result.feedback), feedbacks)
 
         return participant_service.GetFeedbacksFromEventResponse(event_feedback=data)
 
-    def GetUserFeedbackFromEvent(self, request, context):
-        return
+    def GetUserFeedbackForEvent(self, request, context):
+        user_id = request.user.id
+        event_id = request.event.id
+
+        user_event_feedbacks = session.query(UserEventFeedback).filter(UserEventFeedback.user_id == user_id).all()
+        for user_event_feedback in user_event_feedbacks:
+            feedback_id = user_event_feedback.event_feedback_id
+
+            feedback = session.query(Feedback).filter(Feedback.id == feedback_id, Feedback.event_id == event_id).scalar()
+            if feedback is not None:
+                return common.EventFeedback(id=feedback.id, event_id=feedback.event_id, feedback=feedback.feedback)
+        context.set_code(grpc.StatusCode.NOT_FOUND)
+        context.set_details("Cannot find feedback.")
+        return proto_pb2.Response()
 
     def SearchEventsByName(self, request, context):
         text = request.text.lower()
