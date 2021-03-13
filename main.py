@@ -7,15 +7,17 @@ import hts.common.common_pb2 as common
 import hts.participant.service_pb2 as participant_service
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
-from db_model import Feedback, Event, EventDuration, UserEvent, session, Tag, EventTag
+from db_model import Feedback, Event, EventDuration, UserEvent, session, Tag, EventTag, UserEventFeedback
 from helper import getInt64Value, b64encode
 from sqlalchemy import func
 import datetime
 import random
 
+
 class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
     def IsEventAvailable(self, request, context):
+        # TODO: - doesn't work
         event_id = request.id
         now = datetime.datetime.now()
 
@@ -23,7 +25,6 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             EventDuration.id == event_id).scalar()
 
         if(result.start > now):
-            # - Change feedback to return event
             return common.Result(is_ok=True, description="The event haven't start yet")
         return common.Result(is_ok=False, description="The event has already started")
 
@@ -35,14 +36,18 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             UserEvent.user_id == user_id, UserEvent.event_id == event_id)
 
         if (results.scalar()):
-            return common.Result(is_ok=False, description="User has already joined")
+            context.set_code(grpc.StatusCode.ALREADY_EXISTS)
+            context.set_details("User already joined this event.")
+            return proto_pb2.Response()
 
         new_user_event = UserEvent(user_id=user_id, event_id=event_id)
         session.add(new_user_event)
         session.commit()
 
-        # - Change return type to event
-        return common.Result(is_ok=True, description="User successfully join the event")
+        event = session.query(Event).filter(Event.id == event_id).scalar()
+
+        return common.Event(id=event.id, organization_id=event.organization_id, event_location_id=getInt64Value(event.event_location_id), description=event.description, name=event.name,
+                            cover_image=event.cover_image, cover_image_hash=event.cover_image_hash, poster_image=event.poster_image, poster_image_hash=event.poster_image_hash, contact=event.contact)
 
     def CancelEvent(self, request, context):
         user_id = request.user.id
@@ -52,39 +57,54 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             UserEvent.user_id == user_id, UserEvent.event_id == event_id).scalar()
 
         if (results):
+            event = session.query(Event).filter(Event.id == event_id).scalar()
+
             session.delete(results)
             session.commit()
-            return common.Result(is_ok=True, description="Successfully cancel")
+            return common.Event(id=event.id, organization_id=event.organization_id, event_location_id=getInt64Value(event.event_location_id), description=event.description, name=event.name,
+                                cover_image=event.cover_image, cover_image_hash=event.cover_image_hash, poster_image=event.poster_image, poster_image_hash=event.poster_image_hash, contact=event.contact)
 
-        # - change return type to event
-        return common.Result(is_ok=False, description="Cannot find event to cancel")
+        context.set_code(grpc.StatusCode.NOT_FOUND)
+        context.set_details("User have not joined this event.")
+        return proto_pb2.Response()
 
     def CreateFeedback(self, request, context):
+        # TODO: - Only 1 user 1 feedback
         feedback = request.feedback.feedback
         if feedback == "":
-            return common.Result(is_ok=False, description="The feedback is empty")
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details("No feedback given.")
+            return proto_pb2.Response()
+
         new_feedback = Feedback(
             event_id=request.feedback.event_id, feedback=feedback)
         session.add(new_feedback)
         session.commit()
 
-        # - change return type
-        return common.Result(is_ok=True, description="The feedback is recieved")
+        return common.EventFeedback(id=new_feedback.id, event_id=new_feedback.event_id, feedback=new_feedback.feedback)
 
     def HasSubmitFeedback(self, request, context):
+        # user_id = request.user.id
+        # event_id = request.event.id
+
+        # user_event_feedback = session
+
         return
 
     def RemoveFeedback(self, request, context):
         feedback_id = request.id
         feedback = session.query(Feedback).get(feedback_id)
+
         if (feedback):
             session.delete(feedback)
             session.commit()
-            # - change return type
-            return common.Result(is_ok=True, description="The feedback is deleted")
-        return common.Result(is_ok=False, description="No feedback found")
+            return common.EventFeedback(id=feedback.id, event_id=feedback.event_id, feedback=feedback.feedback)
 
-    def GetFeedbackFromEvent(self, request, context):
+        context.set_code(grpc.StatusCode.NOT_FOUND)
+        context.set_details("Cannot find specify feedback.")
+        return proto_pb2.Response()
+
+    def GetFeedbacksFromEvent(self, request, context):
         return
 
     def GetUserFeedbackFromEvent(self, request, context):
