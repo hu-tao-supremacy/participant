@@ -18,7 +18,6 @@ import pytz
 class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
     def IsEventAvailable(self, request, context):
-        # TODO: - doesn't work
         event_id = request.id
         now = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
 
@@ -115,7 +114,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
         return participant_service.GetFeedbacksFromEventResponse(event_feedback=data)
 
-    def GetUserFeedbackForEvent(self, request, context):
+    def GetUserFeedbackFromEvent(self, request, context):
         user_id = request.user.id
         event_id = request.event.id
 
