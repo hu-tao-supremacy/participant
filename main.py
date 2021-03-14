@@ -210,6 +210,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                                                cover_image=result.cover_image, cover_image_hash=result.cover_image_hash, poster_image=result.poster_image, poster_image_hash=result.poster_image_hash, contact=result.contact), events)
         return participant_service.EventsResponse(event=data)
 
+    def Ping(self, request, context):
+        return common.Result(is_ok=True, description="")
+
 
 port = os.environ.get("GRPC_PORT")
 
