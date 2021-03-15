@@ -10,7 +10,7 @@ import hts.participant.service_pb2_grpc as participant_service_grpc
 from db_model import Feedback, Event, EventDuration, UserEvent, session, Tag, EventTag, UserEventFeedback
 from helper import getInt64Value, b64encode
 from sqlalchemy import func
-import datetime
+from google.protobuf.timestamp_pb2 import Timestamp
 import random
 import pytz
 
@@ -18,13 +18,16 @@ import pytz
 class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
     def IsEventAvailable(self, request, context):
-        event_id = request.id
-        now = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
+        event_id = request.event.id
+        date = request.date
+        
 
         result = session.query(EventDuration).filter(
             EventDuration.id == event_id).scalar()
 
-        if(result.start > now):
+        timestamp = Timestamp()
+        timestamp.FromDatetime(result.start)
+        if (timestamp.seconds > date.seconds):
             return common.Result(is_ok=True, description="The event haven't start yet")
         return common.Result(is_ok=False, description="The event has already started")
 
