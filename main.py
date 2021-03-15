@@ -134,7 +134,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         context.set_details("Cannot find feedback.")
         return proto_pb2.Response()
 
-    def SearchEventsByName(self, request, context):
+    def GetEventsByName(self, request, context):
         text = request.text.lower()
         if(text == ""):
             return participant_service.EventsResponse(event=None)
@@ -146,7 +146,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
         return participant_service.EventsResponse(event=events)
 
-    def SearchEventsByTag(self, request, context):
+    def GetEventsByTag(self, request, context):
         text = request.text
         result = session.query(Tag).filter(Tag.name.ilike(text)).scalar()
         if (result is None):
