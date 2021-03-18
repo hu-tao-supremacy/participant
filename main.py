@@ -222,6 +222,17 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             return participant_service.EventsResponse(event=facility_events)
         return participant_service.EventsResponse()
 
+    def GetEventsByOrganization(self, request, context):
+        organization_id = request.id
+
+        results = session.query(Event).filter(
+            Event.organization_id == organization_id).all()
+
+        events = map(lambda result: common.Event(id=result.id, organization_id=result.organization_id, event_location_id=None, description=result.description, name=result.name,
+                                                 cover_image=result.cover_image, cover_image_hash=result.cover_image_hash, poster_image=result.poster_image, poster_image_hash=result.poster_image_hash, contact=result.contact), results)
+
+        return participant_service.EventsResponse(event=events)
+
     def GenerateQR(self, request, context):
         user_event = {"id": request.id, "user_id": request.user_id,
                       "event_id": request.event_id}
