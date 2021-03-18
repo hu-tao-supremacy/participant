@@ -20,7 +20,6 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
     def IsEventAvailable(self, request, context):
         event_id = request.event.id
         date = request.date
-        
 
         result = session.query(EventDuration).filter(
             EventDuration.id == event_id).scalar()
@@ -147,20 +146,15 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return participant_service.EventsResponse(event=events)
 
     def GetEventsByTag(self, request, context):
-        text = request.text
-        result = session.query(Tag).filter(Tag.name.ilike(text)).scalar()
-        if (result is None):
-            return participant_service.EventsResponse()
-        tag_id = result.id
-
+        tag_id = request.id
         events_id = []
         tag_events = []
 
-        if (result is not None):
-            events = session.query(EventTag).filter(
-                EventTag.tag_id == tag_id).all()
-            for event in events:
-                events_id.append(event.id)
+        events = session.query(EventTag).filter(
+            EventTag.tag_id == tag_id).all()
+
+        for event in events:
+            events_id.append(event.id)
 
         for event_id in events_id:
             event = session.query(Event).filter(
