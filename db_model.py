@@ -38,7 +38,7 @@ class Feedback(Base):
 class EventDuration(Base):
     __tablename__ = 'event_duration'
     id = Column(Integer, primary_key=True)
-    event_id = Column(Integer)
+    event_id = Column(Integer, ForeignKey('event.id'))
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
 
@@ -68,17 +68,32 @@ class Tag(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
 
+
 class EventTag(Base):
     __tablename__ = "event_tag"
     id = Column(Integer, primary_key=True)
-    event_id = Column(Integer)
-    tag_id = Column(Integer)
+    event_id = Column(Integer, ForeignKey('event.id'))
+    tag_id = Column(Integer, ForeignKey('tag.id'))
+
 
 class UserEventFeedback(Base):
     __tablename__ = "user_event_feedback"
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer)
-    event_feedback_id = Column(Integer)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    event_feedback_id = Column(Integer, ForeignKey('event_feedback.id'))
+
+
+class Facility(Base):
+    __tablename__ = "facility"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+
+
+class FacilityRequest(Base):
+    __tablename__ = "facility_request"
+    id = Column(Integer, primary_key=True)
+    event_id = Column(Integer, ForeignKey('event.id'))
+    facility_id = Column(Integer, ForeignKey('facility.id'))
 
 
 Base.metadata.create_all(engine)

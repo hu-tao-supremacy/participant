@@ -7,7 +7,7 @@ import hts.common.common_pb2 as common
 import hts.participant.service_pb2 as participant_service
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
-from db_model import Feedback, Event, EventDuration, UserEvent, session, Tag, EventTag, UserEventFeedback
+from db_model import Feedback, Event, EventDuration, UserEvent, session, Tag, EventTag, UserEventFeedback, FacilityRequest
 from helper import getInt64Value, b64encode
 from datetime import datetime
 from sqlalchemy import func
@@ -198,7 +198,28 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             return participant_service.EventsResponse(event=date_events)
         return participant_service.EventsResponse()
 
-    def GetEventsByFacilityString(self, request, context):
+    def GetEventsByFacility(self, request, context):
+        facility_id = request.id
+        events_id = []
+        facility_events = []
+
+        facility_requests = session.query(FacilityRequest).filter(
+            FacilityRequest.facility_id == facility_id).all()
+
+        for facility_request in facility_requests:
+            events_id.append(facility_request.event_id)
+
+        for event_id in events_id:
+            event = session.query(Event).filter(
+                Event.id == event_id).scalar()
+            if (event is not None):
+                facility_events.append(common.Event(id=event.id, organization_id=event.organization_id, event_location_id=None, description=event.description, name=event.name,
+                                                    cover_image=event.cover_image, cover_image_hash=event.cover_image_hash, poster_image=event.poster_image, poster_image_hash=event.poster_image_hash, contact=event.contact))
+
+        if (facility_events):
+            return participant_service.EventsResponse(event=facility_events)
+        return participant_service.EventsResponse()
+
     def GenerateQR(self, request, context):
         user_event = {"id": request.id, "user_id": request.user_id,
                       "event_id": request.event_id}
