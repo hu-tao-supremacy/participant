@@ -10,6 +10,7 @@ import hts.participant.service_pb2_grpc as participant_service_grpc
 from db_model import Feedback, Event, EventDuration, UserEvent, session, Tag, EventTag, UserEventFeedback, FacilityRequest
 from helper import getInt64Value, b64encode
 from datetime import datetime
+from google.protobuf.timestamp_pb2 import Timestamp
 from sqlalchemy import func
 import random
 
