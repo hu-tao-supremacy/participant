@@ -11,6 +11,7 @@ from db_model import Feedback, Event, EventDuration, UserEvent, session, Tag, Ev
 from helper import getInt64Value, b64encode
 from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
+from google.protobuf.wrappers_pb2 import BoolValue
 from sqlalchemy import func
 import random
 
@@ -22,13 +23,18 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         date = request.date
 
         result = session.query(EventDuration).filter(
-            EventDuration.id == event_id).scalar()
+            EventDuration.event_id == event_id).order_by(EventDuration.start).first()
 
         timestamp = Timestamp()
         timestamp.FromDatetime(result.start)
+        boolvalue = BoolValue()
+
         if (timestamp.seconds > date.seconds):
-            return common.Result(is_ok=True, description="The event haven't start yet")
-        return common.Result(is_ok=False, description="The event has already started")
+            boolvalue.value = True
+            return boolvalue
+
+        boolvalue.value = False
+        return boolvalue
 
     def JoinEvent(self, request, context):
         user_id = request.user.id
