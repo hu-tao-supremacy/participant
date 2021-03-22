@@ -186,22 +186,21 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         start_date = datetime(date.year, date.month, date.day, 0, 0, 0)
         end_date = datetime(date.year, date.month, date.day + 1, 0, 0, 0)
 
-        events = session.query(EventDuration).filter(
+        print(start_date, end_date)
+        event_durations = session.query(EventDuration).filter(
             EventDuration.start >= start_date, EventDuration.start < end_date).all()
 
         events_id = []
         date_events = []
 
-        for event in events:
-            events_id.append(event.id)
-
+        for event_duration in event_durations:
+            events_id.append(event_duration.event_id)
         for event_id in events_id:
             event = session.query(Event).filter(
                 Event.id == event_id).scalar()
             if (event is not None):
                 date_events.append(common.Event(id=event.id, organization_id=event.organization_id, event_location_id=None, description=event.description, name=event.name,
                                                 cover_image=event.cover_image, cover_image_hash=event.cover_image_hash, poster_image=event.poster_image, poster_image_hash=event.poster_image_hash, contact=event.contact))
-
         if (date_events):
             return participant_service.EventsResponse(event=date_events)
         return participant_service.EventsResponse()
