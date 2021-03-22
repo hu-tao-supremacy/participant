@@ -310,7 +310,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return participant_service.EventsResponse(event=data)
 
     def Ping(self, request, context):
-        return common.Result(is_ok=True, description="")
+        boolvalue = BoolValue()
+        boolvalue.value = True
+        return boolvalue
 
 
 port = os.environ.get("GRPC_PORT")
