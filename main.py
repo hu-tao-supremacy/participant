@@ -7,7 +7,7 @@ import hts.common.common_pb2 as common
 import hts.participant.service_pb2 as participant_service
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
-from db_model import Feedback, Event, EventDuration, UserEvent, session, Tag, EventTag, UserEventFeedback, FacilityRequest
+from db_model import Feedback, Event, EventDuration, UserEvent, session, Tag, EventTag, UserEventFeedback, FacilityRequest, Answer
 from helper import getInt64Value, b64encode
 from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -72,68 +72,26 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         context.set_details("User have not joined this event.")
         return proto_pb2.Response()
 
-    def SubmitUserPostQuestionAnswerForEvent(self, request, context):
-        # TODO: - Only 1 user 1 feedback
-        user_id = request.user.id
-        feedback = request.feedback.feedback
+    def SubmitAnswerForPostEventQuestion(self, request, context):
+        answers = request.answers
+        user_event_id = request.user_event_id
 
-        if feedback == "":
+        try:
+            for answer in answers:
+                question_id = answer.question_id
+                question_answer = answer.value
+                new_answer = Answer(user_event_id=user_event_id, question_id=question_id, value=question_answer)
+                session.add(new_answer)
+                session.commit()
+        except:
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-            context.set_details("No feedback given.")
+            context.set_details("User already gave feedback")
             return proto_pb2.Response()
+        
 
-        new_feedback = Feedback(
-            event_id=request.feedback.event_id, feedback=feedback)
-        session.add(new_feedback)
-        session.commit()
-
-        new_user_event_feedback = UserEventFeedback(
-            user_id=user_id, event_feedback_id=new_feedback.id)
-        session.add(new_user_event_feedback)
-        session.commit()
-
-        return common.EventFeedback(id=new_feedback.id, event_id=new_feedback.event_id, feedback=new_feedback.feedback)
-
-    def RemoveUserPostQuestionAnswerForEvent(self, request, context):
-        feedback_id = request.id
-        feedback = session.query(Feedback).get(feedback_id)
-
-        if (feedback):
-            session.delete(feedback)
-            session.commit()
-            return common.EventFeedback(id=feedback.id, event_id=feedback.event_id, feedback=feedback.feedback)
-
-        context.set_code(grpc.StatusCode.NOT_FOUND)
-        context.set_details("Cannot find specify feedback.")
-        return proto_pb2.Response()
-
-    # def GetFeedbacksFromEvent(self, request, context):
-    #     event_id = request.id
-
-    #     feedbacks = session.query(Feedback).filter(
-    #         Feedback.event_id == event_id).all()
-
-    #     data = map(lambda result: common.EventFeedback(
-    #         id=result.id, event_id=result.event_id, feedback=result.feedback), feedbacks)
-
-    #     return participant_service.GetFeedbacksFromEventResponse(event_feedback=data)
-
-    # def GetUserFeedbackFromEvent(self, request, context):
-    #     user_id = request.user.id
-    #     event_id = request.event.id
-
-    #     user_event_feedbacks = session.query(UserEventFeedback).filter(
-    #         UserEventFeedback.user_id == user_id).all()
-    #     for user_event_feedback in user_event_feedbacks:
-    #         feedback_id = user_event_feedback.event_feedback_id
-
-    #         feedback = session.query(Feedback).filter(
-    #             Feedback.id == feedback_id, Feedback.event_id == event_id).scalar()
-    #         if feedback is not None:
-    #             return common.EventFeedback(id=feedback.id, event_id=feedback.event_id, feedback=feedback.feedback)
-    #     context.set_code(grpc.StatusCode.NOT_FOUND)
-    #     context.set_details("Cannot find feedback.")
-    #     return proto_pb2.Response()
+        results = session.query(Answer).filter(Answer.user_event_id == user_event_id).all()
+        data = map(lambda result: common.Answer(user_event_id=result.user_event_id, question_id=result.question_id, value=result.value), results)
+        return participant_service.SubmitAnswerForPostEventQuestionResponse(answers=data)
 
     def GetEventById(self, request, context):
         event = session.query(Event).filter(

@@ -97,6 +97,16 @@ class FacilityRequest(Base):
     event_id = Column(Integer, ForeignKey('event.id'))
     facility_id = Column(Integer, ForeignKey('facility.id'))
 
+class Answer(Base):
+    __tablename__ = "answer"
+    id = Column(Integer, primary_key=True)
+    user_event_id = Column(Integer, ForeignKey('user_event.id'))
+    question_id = Column(Integer, ForeignKey('question.id'))
+    value = Column(String)
+
+class Question(Base):
+    __tablename__ = "question"
+    id = Column(Integer, primary_key=True)
 
 Base.metadata.create_all(engine)
 
