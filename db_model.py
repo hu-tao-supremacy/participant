@@ -21,12 +21,14 @@ class Event(Base):
         "event_location.id"), nullable=True)
     description = Column(String)
     name = Column(String)
-    cover_image = Column(String, nullable=True)
+    cover_image_url = Column(String, nullable=True)
     cover_image_hash = Column(String, nullable=True)
-    poster_image = Column(String, nullable=True)
+    poster_image_url = Column(String, nullable=True)
     poster_image_hash = Column(String, nullable=True)
     contact = Column(String)
-
+    profile_image_url = Column(String, nullable=True)
+    profile_image_hash = Column(String, nullable=True)
+    attendee_limit = Column(Integer)
 
 class Feedback(Base):
     __tablename__ = 'event_feedback'
