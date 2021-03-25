@@ -2,6 +2,8 @@ from google.protobuf import wrappers_pb2 as wrapper
 import base64
 
 def getInt64Value(value):
+    if value is None:
+        return None
     temp = wrapper.Int64Value()
     temp.value = value
     return temp
