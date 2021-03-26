@@ -59,7 +59,6 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         session.commit()
 
         added_user_event = result.scalar()
-        print(added_user_event)
         return common.UserEvent(id=added_user_event.id, user_id=added_user_event.user_id, event_id=added_user_event.event_id, rating=added_user_event.rating, ticket=added_user_event.ticket, status=added_user_event.status)
 
     def CancelEvent(self, request, context):
