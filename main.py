@@ -1,103 +1,300 @@
 from concurrent import futures
 import logging
+import os
 
 import grpc
 import hts.common.common_pb2 as common
 import hts.participant.service_pb2 as participant_service
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
-from db_model import Feedback, Event, EventDuration, UserEvent, session
-import datetime
+from db_model import Event, EventDuration, UserEvent, session, Tag, EventTag, FacilityRequest, Answer
+from helper import getInt64Value, b64encode
+from datetime import datetime
+from google.protobuf.timestamp_pb2 import Timestamp
+from google.protobuf.wrappers_pb2 import BoolValue
+from sqlalchemy import func
+import random
 
 
 class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
     def IsEventAvailable(self, request, context):
-        event_id = request.event.id
-        now = datetime.datetime.now()
+        event_id = request.event_id
+        date = request.date
 
         result = session.query(EventDuration).filter(
-            EventDuration.id == event_id).scalar()
+            EventDuration.event_id == event_id).order_by(EventDuration.start).first()
 
-        if(result.start > now):
-            return common.Result(is_ok=True, description="The event haven't start yet")
-        return common.Result(is_ok=False, description="The event has already started")
+        if (result is None):
+            context.set_code(grpc.StatusCode.NOT_FOUND)
+            context.set_details("Event not found")
+            return proto_pb2.Response()
+
+        timestamp = Timestamp()
+        timestamp.FromDatetime(result.start)
+        boolvalue = BoolValue()
+
+        if (timestamp.seconds > date.seconds):
+            boolvalue.value = True
+            return boolvalue
+
+        boolvalue.value = False
+        return boolvalue
 
     def JoinEvent(self, request, context):
-        user_id = request.user.id
-        event_id = request.event.id
+        user_id = request.user_id
+        event_id = request.event_id
 
-        results = session.query(UserEvent).filter(
+        result = session.query(UserEvent).filter(
             UserEvent.user_id == user_id, UserEvent.event_id == event_id)
 
-        if (results.scalar()):
-            return common.Result(is_ok=False, description="User has already joined")
+        if (result.scalar()):
+            context.set_code(grpc.StatusCode.ALREADY_EXISTS)
+            context.set_details("User already send request this event.")
+            return proto_pb2.Response()
 
-        new_user_event = UserEvent(user_id=user_id, event_id=event_id)
+        new_user_event = UserEvent(
+            user_id=user_id, event_id=event_id, rating=None, ticket=None, status="PENDING")
         session.add(new_user_event)
         session.commit()
-        return common.Result(is_ok=True, description="User successfully join the event")
+
+        added_user_event = result.scalar()
+        print(added_user_event)
+        return common.UserEvent(id=added_user_event.id, user_id=added_user_event.user_id, event_id=added_user_event.event_id, rating=added_user_event.rating, ticket=added_user_event.ticket, status=added_user_event.status)
 
     def CancelEvent(self, request, context):
-        user_id = request.user.id
-        event_id = request.event.id
+        user_id = request.user_id
+        event_id = request.event_id
 
         results = session.query(UserEvent).filter(
             UserEvent.user_id == user_id, UserEvent.event_id == event_id).scalar()
 
         if (results):
+            event = session.query(Event).filter(Event.id == event_id).scalar()
+
             session.delete(results)
             session.commit()
-            return common.Result(is_ok=True, description="Successfully cancel")
+            return common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=event.cover_image_url, cover_image_hash=event.cover_image_hash, poster_image_url=event.poster_image_url, poster_image_hash=event.poster_image_hash, profile_image_url=event.profile_image_url, profile_image_hash=event.profile_image_hash, attendee_limit=event.attendee_limit, contact=event.contact)
 
-        return common.Result(is_ok=False, description="Cannot find event to cancel")
+        context.set_code(grpc.StatusCode.NOT_FOUND)
+        context.set_details("User have not joined this event.")
+        return proto_pb2.Response()
 
-    def CreateFeedback(self, request, context):
-        feedback = request.feedback.feedback
-        if feedback == "":
-            return common.Result(is_ok=False, description="The feedback is empty")
-        new_feedback = Feedback(
-            event_id=request.feedback.event_id, feedback=feedback)
-        session.add(new_feedback)
-        session.commit()
-        return common.Result(is_ok=True, description="The feedback is recieved")
+    def SubmitAnswerForPostEventQuestion(self, request, context):
+        answers = request.answers
+        new_answers = []
+        user_event_id = request.user_event_id
 
-    def RemoveFeedback(self, request, context):
-        feedback_id = request.feedback.id
-        feedback = session.query(Feedback).get(feedback_id)
-        if (feedback):
-            session.delete(feedback)
+        user_event_answer = session.query(Answer).filter(
+            Answer.user_event_id == user_event_id)
+        for answer in answers:
+            unique_answer = user_event_answer.filter(
+                Answer.question_id == answer.question_id)
+            if(unique_answer.first() is None):
+                new_answers.append(answer)
+
+        if (not new_answers):
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details("User already gave feedback")
+            return proto_pb2.Response()
+        for answer in new_answers:
+            question_id = answer.question_id
+            question_answer = answer.value
+            new_answer = Answer(user_event_id=user_event_id,
+                                question_id=question_id, value=question_answer)
+            session.add(new_answer)
             session.commit()
-            return common.Result(is_ok=True, description="The feedback is deleted")
-        return common.Result(is_ok=False, description="No feedback found")
 
-    def SearchEventsByName(self, request, context):
-        text = request.name
-        print(text)
+        data = map(lambda result: common.Answer(user_event_id=result.user_event_id,
+                                                question_id=result.question_id, value=result.value), user_event_answer.all())
+        return participant_service.SubmitAnswerForPostEventQuestionResponse(answers=data)
+
+    def GetEventById(self, request, context):
+        event = session.query(Event).filter(
+            Event.id == request.event_id).scalar()
+
+        if (event is not None):
+            return common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=event.cover_image_url, cover_image_hash=event.cover_image_hash, poster_image_url=event.poster_image_url, poster_image_hash=event.poster_image_hash, profile_image_url=event.profile_image_url, profile_image_hash=event.profile_image_hash, attendee_limit=event.attendee_limit, contact=event.contact)
+        return common.Event()
+
+    def GetAllEvents(self, request, context):
+        events = session.query(Event)
+
+        data = map(lambda event: common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=event.cover_image_url, cover_image_hash=event.cover_image_hash,
+                                              poster_image_url=event.poster_image_url, poster_image_hash=event.poster_image_hash, profile_image_url=event.profile_image_url, profile_image_hash=event.profile_image_hash, attendee_limit=event.attendee_limit, contact=event.contact), events)
+        return participant_service.EventsResponse(event=data)
+
+    def GetSuggestedEvents(self, request, context):
+
+        def getRandomNumber():
+            return round(random.random() * 100)
+
+        events = []
+
+        for i in range(0, 10):
+            event = session.query(Event).filter(
+                Event.id == getRandomNumber()).scalar()
+            if (event is not None):
+                events.append(common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=event.cover_image_url, cover_image_hash=event.cover_image_hash,
+                                           poster_image_url=event.poster_image_url, poster_image_hash=event.poster_image_hash, profile_image_url=event.profile_image_url, profile_image_hash=event.profile_image_hash, attendee_limit=event.attendee_limit, contact=event.contact))
+
+        return participant_service.EventsResponse(event=events)
+
+    def GetUpcomingEvents(self, request, context):
+        start = request.start.seconds
+        end = request.end.seconds
+        text = [float(start), float(end)]
+        if (text[0] == 0 or text[1] == 0):
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details("Wrong timestamp format.")
+            return proto_pb2.Response()
+
+        start_date = datetime.fromtimestamp(text[0])
+        end_date = datetime.fromtimestamp(text[1])
+
+        event_durations = session.query(EventDuration).filter(
+            EventDuration.start >= start_date, EventDuration.start < end_date).all()
+
+        events_id = []
+        date_events = []
+
+        for event_duration in event_durations:
+            events_id.append(event_duration.event_id)
+        for event_id in events_id:
+            event = session.query(Event).filter(
+                Event.id == event_id).scalar()
+            if (event is not None):
+                date_events.append(common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=event.cover_image_url, cover_image_hash=event.cover_image_hash,
+                                                poster_image_url=event.poster_image_url, poster_image_hash=event.poster_image_hash, profile_image_url=event.profile_image_url, profile_image_hash=event.profile_image_hash, attendee_limit=event.attendee_limit, contact=event.contact))
+        if (date_events):
+            return participant_service.EventsResponse(event=date_events)
+        return participant_service.EventsResponse()
+
+    def GetEventsByStringOfName(self, request, context):
+        text = request.text.lower()
         if(text == ""):
-            print("asdf")
-            return participant_service.SearchEventsByNameRespond(events=None)
-        results = session.query(Event).filter(Event.name.contains(text))
+            return participant_service.EventsResponse(event=None)
+        results = session.query(Event).filter(
+            func.lower(Event.name).contains(text))
 
-        data = map(lambda result: common.Event(id=result.id, organization_id=result.organization_id, event_location_id=result.event_location_id, description=result.description, name=result.name,
-                                               cover_image=result.cover_image, cover_image_hash=result.cover_image_hash, poster_image=result.poster_image, poster_image_hash=result.poster_image_hash, contact=result.contact), results)
+        events = map(lambda event: common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=event.cover_image_url, cover_image_hash=event.cover_image_hash,
+                                                poster_image_url=event.poster_image_url, poster_image_hash=event.poster_image_hash, profile_image_url=event.profile_image_url, profile_image_hash=event.profile_image_hash, attendee_limit=event.attendee_limit, contact=event.contact), results)
 
-        return participant_service.SearchEventsByNameRespond(events=data)
+        return participant_service.EventsResponse(event=events)
+
+    def GetEventsByTagId(self, request, context):
+        tag_id = request.id
+        events_id = []
+        tag_events = []
+
+        events = session.query(EventTag).filter(
+            EventTag.tag_id == tag_id).all()
+
+        for event in events:
+            events_id.append(event.id)
+
+        for event_id in events_id:
+            event = session.query(Event).filter(
+                Event.id == event_id).scalar()
+            if (event is not None):
+                tag_events.append(common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=event.cover_image_url, cover_image_hash=event.cover_image_hash,
+                                               poster_image_url=event.poster_image_url, poster_image_hash=event.poster_image_hash, profile_image_url=event.profile_image_url, profile_image_hash=event.profile_image_hash, attendee_limit=event.attendee_limit, contact=event.contact))
+
+        if (tag_events):
+            return participant_service.EventsResponse(event=tag_events)
+        return participant_service.EventsResponse()
+
+    def GetEventsByFacilityId(self, request, context):
+        facility_id = request.id
+        events_id = []
+        facility_events = []
+
+        facility_requests = session.query(FacilityRequest).filter(
+            FacilityRequest.facility_id == facility_id).all()
+
+        for facility_request in facility_requests:
+            events_id.append(facility_request.event_id)
+
+        for event_id in events_id:
+            event = session.query(Event).filter(
+                Event.id == event_id).scalar()
+            if (event is not None):
+                facility_events.append(common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=event.cover_image_url, cover_image_hash=event.cover_image_hash,
+                                                    poster_image_url=event.poster_image_url, poster_image_hash=event.poster_image_hash, profile_image_url=event.profile_image_url, profile_image_hash=event.profile_image_hash, attendee_limit=event.attendee_limit, contact=event.contact))
+
+        if (facility_events):
+            return participant_service.EventsResponse(event=facility_events)
+        return participant_service.EventsResponse()
+
+    def GetEventsByOrganizationId(self, request, context):
+        organization_id = request.id
+
+        results = session.query(Event).filter(
+            Event.organization_id == organization_id).all()
+
+        events = map(lambda event: common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=event.cover_image_url, cover_image_hash=event.cover_image_hash,
+                                                poster_image_url=event.poster_image_url, poster_image_hash=event.poster_image_hash, profile_image_url=event.profile_image_url, profile_image_hash=event.profile_image_hash, attendee_limit=event.attendee_limit, contact=event.contact), results)
+
+        return participant_service.EventsResponse(event=events)
+
+    def GetEventsByDate(self, request, context):
+        timestamp = request.seconds
+        try:
+            text = float(timestamp)
+        except:
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details("Wrong timestamp format.")
+            return proto_pb2.Response()
+
+        date = datetime.fromtimestamp(text)
+        start_date = datetime(date.year, date.month, date.day, 0, 0, 0)
+        end_date = datetime(date.year, date.month, date.day + 1, 0, 0, 0)
+
+        event_durations = session.query(EventDuration).filter(
+            EventDuration.start >= start_date, EventDuration.start < end_date).all()
+
+        events_id = []
+        date_events = []
+
+        for event_duration in event_durations:
+            events_id.append(event_duration.event_id)
+        for event_id in events_id:
+            event = session.query(Event).filter(
+                Event.id == event_id).scalar()
+            if (event is not None):
+                date_events.append(common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=event.cover_image_url, cover_image_hash=event.cover_image_hash,
+                                                poster_image_url=event.poster_image_url, poster_image_hash=event.poster_image_hash, profile_image_url=event.profile_image_url, profile_image_hash=event.profile_image_hash, attendee_limit=event.attendee_limit, contact=event.contact))
+        if (date_events):
+            return participant_service.EventsResponse(event=date_events)
+        return participant_service.EventsResponse()
 
     def GenerateQR(self, request, context):
-        param = request.user_event
-        user_event = {"id": param.id, "user_id": param.user_id,
-                      "event_id": param.event_id}
-        string_user_event = str(user_event)
+        result = session.query(UserEvent).filter(
+            UserEvent.id == request.user_event_id)
+        if (result.scalar()):
+            user_event = {"use_event_id": request.user_event_id, "user_id": request.user_id,
+                          "event_id": request.event_id}
+            string_user_event = b64encode(str(user_event))
+            return participant_service.GenerateQRResponse(data=string_user_event)
+        else:
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details("UserEvent not found")
+            return proto_pb2.Response()
 
-        return participant_service.GenerateQRRespond(data=string_user_event)
+    def Ping(self, request, context):
+        boolvalue = BoolValue()
+        boolvalue.value = True
+        return boolvalue
+
+
+port = os.environ.get("GRPC_PORT")
 
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     participant_service_grpc.add_ParticipantServiceServicer_to_server(
         ParticipantService(), server)
-    server.add_insecure_port('[::]:50051')
+    server.add_insecure_port('[::]:'+port)
     server.start()
     server.wait_for_termination()
 
