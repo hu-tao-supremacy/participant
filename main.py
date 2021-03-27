@@ -7,12 +7,12 @@ import hts.common.common_pb2 as common
 import hts.participant.service_pb2 as participant_service
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
-from db_model import Event, EventDuration, UserEvent, session, Tag, EventTag, FacilityRequest, Answer, Location
+from db_model import Event, EventDuration, UserEvent, session, Tag, EventTag, FacilityRequest, Answer, Location, User
 from helper import getInt64Value, b64encode, getStringValue
 from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
 from google.protobuf.wrappers_pb2 import BoolValue
-from sqlalchemy import func
+from sqlalchemy import func, or_
 import random
 
 
@@ -313,7 +313,28 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         context.set_details("No rating found for event")
         return proto_pb2.Response()
 
-    # def GetApprovedUserFromEventId(self, request, context):
+    def GetApprovedUserFromEventId(self, request, context):
+        event_id = request.id
+        users_id = []
+        approved_user = []
+
+        user_events_by_event_id = session.query(UserEvent).filter(
+            UserEvent.event_id == event_id, UserEvent.status == "APPROVED").all()
+
+        if (user_events_by_event_id):
+            for user_event in user_events_by_event_id:
+                user_id = user_event.user_id
+                users_id.append(user_id)
+            users = session.query(User).filter(
+                or_(User.id == v for v in users_id)).all()
+            if users:
+                for user in users:
+                    approved_user.append(common.User(id=user.id, first_name=user.first_name, last_name=user.last_name, email=user.email, nickname=getStringValue(user.nickname), chula_id=getStringValue(
+                        user.chula_id), address=getStringValue(user.address), profile_picture_url=getStringValue(user.profile_picture_url), is_chula_student=user.is_chula_student, gender=user.gender))
+                return participant_service.GetApprovedUserFromEventIdResponse(users=approved_user)
+        context.set_code(grpc.StatusCode.NOT_FOUND)
+        context.set_details("No approved user found for event")
+        return proto_pb2.Response()
 
     def GenerateQR(self, request, context):
         result = session.query(UserEvent).filter(

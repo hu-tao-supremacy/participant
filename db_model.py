@@ -52,7 +52,16 @@ class UserEvent(Base):
 class User(Base):
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
-
+    first_name = Column(String)
+    last_name = Column(String)
+    email = Column(String)
+    nickname = Column(String, nullable=True)
+    chula_id = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+    profile_picture_url = Column(String, nullable=True)
+    is_chula_student = Column(Boolean)
+    gender = Column(
+        Enum("M", "F", "NS", name="gender_enum", create_type=False))
 
 class Tag(Base):
     __tablename__ = "tag"
