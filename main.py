@@ -272,6 +272,23 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             context.set_details("No location found with given location_id")
             return proto_pb2.Response()
 
+    def GetTagsFromEventId(self, request, context):
+        event_id = request.id
+        tags_id = []
+        tags_of_event =[]
+
+        tags = session.query(EventTag).filter(EventTag.event_id == event_id).all()
+        for tag in tags:
+            tags_id.append(tag.id)
+
+        for tag_id in tags_id:
+            tag = session.query(Tag).filter(Tag.id == tag_id).scalar()
+            if (tag is not None):
+                tags_of_event.append(common.Tag(id=tag.id, name=tag.name))
+        if (tags_of_event):
+            return participant_service.GetTagsFromEventIdResonse(tags=tags_of_event)
+        return participant_service.GetTagsFromEventIdResonse()
+
     def GenerateQR(self, request, context):
         result = session.query(UserEvent).filter(
             UserEvent.id == request.user_event_id)
