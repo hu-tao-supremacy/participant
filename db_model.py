@@ -92,6 +92,15 @@ class Question(Base):
     __tablename__ = "question"
     id = Column(Integer, primary_key=True)
 
+class Location(Base):
+    __tablename__ = "location"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    google_map_url = Column(String)
+    description = Column(String, nullable=True)
+    travel_information_image_url = Column(String, nullable=True)
+    travel_information_image_hash = Column(String, nullable=True)
+
 
 Base.metadata.create_all(engine)
 

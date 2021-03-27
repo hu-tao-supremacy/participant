@@ -7,7 +7,7 @@ import hts.common.common_pb2 as common
 import hts.participant.service_pb2 as participant_service
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
-from db_model import Event, EventDuration, UserEvent, session, Tag, EventTag, FacilityRequest, Answer
+from db_model import Event, EventDuration, UserEvent, session, Tag, EventTag, FacilityRequest, Answer, Location
 from helper import getInt64Value, b64encode
 from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -267,6 +267,17 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             return participant_service.EventsResponse(event=date_events)
         return participant_service.EventsResponse()
 
+    def GetLocationById(self, request, context):
+        id = request.id
+
+        location = session.query(Location).filter(Location.id==id).scalar()
+
+        if(location):
+            return common.Location(id=location.id, name=location.name, google_map_url=location.google_map_url, description=location.description, travel_information_image_url=location.travel_information_image_url, travel_information_image_hash=location.travel_information_image_hash)
+        else:
+            context.set_code(grpc.StatusCode.NOT_FOUND)
+            context.set_details("No location found with given location_id")
+            return proto_pb2.Response()
     def GenerateQR(self, request, context):
         result = session.query(UserEvent).filter(
             UserEvent.id == request.user_event_id)
