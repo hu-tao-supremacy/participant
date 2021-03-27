@@ -294,7 +294,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 tags_of_event.append(common.Tag(id=tag.id, name=tag.name))
         if (tags_of_event):
             return participant_service.GetTagsFromEventIdResonse(tags=tags_of_event)
-        return participant_service.GetTagsFromEventIdResonse()
+        return participant_service.GetTagsFromEventIdResonse(tags=[])
 
     def GetRatingFromEventId(self, request, context):
         event_id = request.id
