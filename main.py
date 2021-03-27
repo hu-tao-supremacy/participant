@@ -233,9 +233,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
     def GetEventsByDate(self, request, context):
         timestamp = request.seconds
-        try:
-            text = float(timestamp)
-        except:
+        text = float(timestamp)
+        if (text == 0 ):
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details("Wrong timestamp format.")
             return proto_pb2.Response()
