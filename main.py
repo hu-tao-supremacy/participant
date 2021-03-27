@@ -163,7 +163,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             event = session.query(Event).filter(
                 Event.id == event_id).scalar()
             if (event is not None):
-                date_events.append(common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=getStringValue(event.cover_image_url), cover_image_hash=getStringValue(event.cover_image_hash), poster_image_url=getStringValue(event.poster_image_url), poster_image_hash=getStringValue(event.poster_image_hash), profile_image_url=getStringValue(event.profile_image_url), profile_image_hash=getStringValue(event.profile_image_hash), attendee_limit=event.attendee_limit, contact=getStringValue(event.contact)))
+                date_events.append(common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=getStringValue(event.cover_image_url), cover_image_hash=getStringValue(event.cover_image_hash), poster_image_url=getStringValue(
+                    event.poster_image_url), poster_image_hash=getStringValue(event.poster_image_hash), profile_image_url=getStringValue(event.profile_image_url), profile_image_hash=getStringValue(event.profile_image_hash), attendee_limit=event.attendee_limit, contact=getStringValue(event.contact)))
         if (date_events):
             return participant_service.EventsResponse(event=date_events)
         return participant_service.EventsResponse()
@@ -175,7 +176,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         results = session.query(Event).filter(
             func.lower(Event.name).contains(text))
 
-        events = map(lambda event: common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=getStringValue(event.cover_image_url), cover_image_hash=getStringValue(event.cover_image_hash), poster_image_url=getStringValue(event.poster_image_url), poster_image_hash=getStringValue(event.poster_image_hash), profile_image_url=getStringValue(event.profile_image_url), profile_image_hash=getStringValue(event.profile_image_hash), attendee_limit=event.attendee_limit, contact=getStringValue(event.contact)), results)
+        events = map(lambda event: common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=getStringValue(event.cover_image_url), cover_image_hash=getStringValue(event.cover_image_hash), poster_image_url=getStringValue(
+            event.poster_image_url), poster_image_hash=getStringValue(event.poster_image_hash), profile_image_url=getStringValue(event.profile_image_url), profile_image_hash=getStringValue(event.profile_image_hash), attendee_limit=event.attendee_limit, contact=getStringValue(event.contact)), results)
 
         return participant_service.EventsResponse(event=events)
 
@@ -194,7 +196,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             event = session.query(Event).filter(
                 Event.id == event_id).scalar()
             if (event is not None):
-                tag_events.append(common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=getStringValue(event.cover_image_url), cover_image_hash=getStringValue(event.cover_image_hash), poster_image_url=getStringValue(event.poster_image_url), poster_image_hash=getStringValue(event.poster_image_hash), profile_image_url=getStringValue(event.profile_image_url), profile_image_hash=getStringValue(event.profile_image_hash), attendee_limit=event.attendee_limit, contact=getStringValue(event.contact)))
+                tag_events.append(common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=getStringValue(event.cover_image_url), cover_image_hash=getStringValue(event.cover_image_hash), poster_image_url=getStringValue(
+                    event.poster_image_url), poster_image_hash=getStringValue(event.poster_image_hash), profile_image_url=getStringValue(event.profile_image_url), profile_image_hash=getStringValue(event.profile_image_hash), attendee_limit=event.attendee_limit, contact=getStringValue(event.contact)))
 
         if (tag_events):
             return participant_service.EventsResponse(event=tag_events)
@@ -215,7 +218,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             event = session.query(Event).filter(
                 Event.id == event_id).scalar()
             if (event is not None):
-                facility_events.append(common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=getStringValue(event.cover_image_url), cover_image_hash=getStringValue(event.cover_image_hash), poster_image_url=getStringValue(event.poster_image_url), poster_image_hash=getStringValue(event.poster_image_hash), profile_image_url=getStringValue(event.profile_image_url), profile_image_hash=getStringValue(event.profile_image_hash), attendee_limit=event.attendee_limit, contact=getStringValue(event.contact)))
+                facility_events.append(common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=getStringValue(event.cover_image_url), cover_image_hash=getStringValue(event.cover_image_hash), poster_image_url=getStringValue(
+                    event.poster_image_url), poster_image_hash=getStringValue(event.poster_image_hash), profile_image_url=getStringValue(event.profile_image_url), profile_image_hash=getStringValue(event.profile_image_hash), attendee_limit=event.attendee_limit, contact=getStringValue(event.contact)))
 
         if (facility_events):
             return participant_service.EventsResponse(event=facility_events)
@@ -227,14 +231,15 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         results = session.query(Event).filter(
             Event.organization_id == organization_id).all()
 
-        events = map(lambda event: common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=getStringValue(event.cover_image_url), cover_image_hash=getStringValue(event.cover_image_hash), poster_image_url=getStringValue(event.poster_image_url), poster_image_hash=getStringValue(event.poster_image_hash), profile_image_url=getStringValue(event.profile_image_url), profile_image_hash=getStringValue(event.profile_image_hash), attendee_limit=event.attendee_limit, contact=getStringValue(event.contact)), results)
+        events = map(lambda event: common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=getStringValue(event.cover_image_url), cover_image_hash=getStringValue(event.cover_image_hash), poster_image_url=getStringValue(
+            event.poster_image_url), poster_image_hash=getStringValue(event.poster_image_hash), profile_image_url=getStringValue(event.profile_image_url), profile_image_hash=getStringValue(event.profile_image_hash), attendee_limit=event.attendee_limit, contact=getStringValue(event.contact)), results)
 
         return participant_service.EventsResponse(event=events)
 
     def GetEventsByDate(self, request, context):
         timestamp = request.seconds
         text = float(timestamp)
-        if (text == 0 ):
+        if (text == 0):
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details("Wrong timestamp format.")
             return proto_pb2.Response()
@@ -255,7 +260,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             event = session.query(Event).filter(
                 Event.id == event_id).scalar()
             if (event is not None):
-                date_events.append(common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=getStringValue(event.cover_image_url), cover_image_hash=getStringValue(event.cover_image_hash), poster_image_url=getStringValue(event.poster_image_url), poster_image_hash=getStringValue(event.poster_image_hash), profile_image_url=getStringValue(event.profile_image_url), profile_image_hash=getStringValue(event.profile_image_hash), attendee_limit=event.attendee_limit, contact=getStringValue(event.contact)))
+                date_events.append(common.Event(id=event.id, organization_id=event.organization_id, location_id=getInt64Value(event.location_id), description=event.description, name=event.name, cover_image_url=getStringValue(event.cover_image_url), cover_image_hash=getStringValue(event.cover_image_hash), poster_image_url=getStringValue(
+                    event.poster_image_url), poster_image_hash=getStringValue(event.poster_image_hash), profile_image_url=getStringValue(event.profile_image_url), profile_image_hash=getStringValue(event.profile_image_hash), attendee_limit=event.attendee_limit, contact=getStringValue(event.contact)))
         if (date_events):
             return participant_service.EventsResponse(event=date_events)
         return participant_service.EventsResponse()
@@ -275,9 +281,10 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
     def GetTagsFromEventId(self, request, context):
         event_id = request.id
         tags_id = []
-        tags_of_event =[]
+        tags_of_event = []
 
-        tags = session.query(EventTag).filter(EventTag.event_id == event_id).all()
+        tags = session.query(EventTag).filter(
+            EventTag.event_id == event_id).all()
         for tag in tags:
             tags_id.append(tag.id)
 
@@ -288,6 +295,25 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         if (tags_of_event):
             return participant_service.GetTagsFromEventIdResonse(tags=tags_of_event)
         return participant_service.GetTagsFromEventIdResonse()
+
+    def GetRatingFromEventId(self, request, context):
+        event_id = request.id
+        ratings = []
+
+        user_events_by_event_id = session.query(UserEvent).filter(
+            UserEvent.event_id == event_id).all()
+
+        if (user_events_by_event_id):
+            for user_event in user_events_by_event_id:
+                temp = user_event.rating
+                if (temp is not None):
+                    ratings.append(temp)
+            return participant_service.GetRatingFromEventIdResponse(result=ratings)
+        context.set_code(grpc.StatusCode.NOT_FOUND)
+        context.set_details("No rating found for event")
+        return proto_pb2.Response()
+
+    # def GetApprovedUserFromEventId(self, request, context):
 
     def GenerateQR(self, request, context):
         result = session.query(UserEvent).filter(
