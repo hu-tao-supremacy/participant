@@ -8,6 +8,7 @@ import hts.participant.service_pb2 as participant_service
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
 from db_model import Event, EventDuration, UserEvent, session, Tag, EventTag, FacilityRequest, Answer, Location, User
+from db_model import session
 from helper import getInt64Value, b64encode, getStringValue
 from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -355,8 +356,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         return boolvalue
 
 
-port = os.environ.get("GRPC_PORT")
+session.close()
 
+port = os.environ.get("GRPC_PORT")
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
