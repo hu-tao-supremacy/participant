@@ -169,7 +169,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                         event.poster_image_url), poster_image_hash=getStringValue(event.poster_image_hash), profile_image_url=getStringValue(event.profile_image_url), profile_image_hash=getStringValue(event.profile_image_hash), attendee_limit=event.attendee_limit, contact=getStringValue(event.contact)))
             if (date_events):
                 return participant_service.EventsResponse(event=date_events)
-            return participant_service.EventsResponse()
+            return participant_service.EventsResponse(event=[])
 
         def GetEventsByStringOfName(self, request, context):
             text = request.text.lower()
@@ -203,7 +203,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
             if (tag_events):
                 return participant_service.EventsResponse(event=tag_events)
-            return participant_service.EventsResponse()
+            return participant_service.EventsResponse(event=[])
 
         def GetEventsByFacilityId(self, request, context):
             facility_id = request.id
@@ -225,7 +225,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
             if (facility_events):
                 return participant_service.EventsResponse(event=facility_events)
-            return participant_service.EventsResponse()
+            return participant_service.EventsResponse(event=[])
 
         def GetEventsByOrganizationId(self, request, context):
             organization_id = request.id
@@ -266,7 +266,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                         event.poster_image_url), poster_image_hash=getStringValue(event.poster_image_hash), profile_image_url=getStringValue(event.profile_image_url), profile_image_hash=getStringValue(event.profile_image_hash), attendee_limit=event.attendee_limit, contact=getStringValue(event.contact)))
             if (date_events):
                 return participant_service.EventsResponse(event=date_events)
-            return participant_service.EventsResponse()
+            return participant_service.EventsResponse(event=[])
 
         def GetLocationById(self, request, context):
             id = request.id
@@ -297,7 +297,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     tags_of_event.append(common.Tag(id=tag.id, name=tag.name))
             if (tags_of_event):
                 return participant_service.GetTagsFromEventIdResonse(tags=tags_of_event)
-            return participant_service.GetTagsFromEventIdResonse()
+            return participant_service.GetTagsFromEventIdResonse(tags=[])
 
         def GetRatingByEventId(self, request, context):
             event_id = request.id
