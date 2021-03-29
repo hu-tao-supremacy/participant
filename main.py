@@ -86,13 +86,11 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
         user_event_answer = session.query(Answer).filter(
             Answer.user_event_id == user_event_id)
-        print(user_event_answer.all())
         for answer in answers:
             unique_answer = user_event_answer.filter(
                 Answer.question_id == answer.question_id)
             if(unique_answer.first() is None):
                 new_answers.append(answer)
-        print(user_event_answer.all())
 
         if (not new_answers):
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
