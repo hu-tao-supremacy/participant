@@ -96,6 +96,13 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details("User already gave feedback")
             return proto_pb2.Response()
+
+        user_event = session.query(UserEvent).filter(UserEvent.id == user_event_id).first()
+        if (user_event is None):
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details("User Event not found")
+            return proto_pb2.Response()
+
         for answer in new_answers:
             question_id = answer.question_id
             question_answer = answer.value
