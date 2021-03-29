@@ -63,6 +63,7 @@ class User(Base):
     gender = Column(
         Enum("M", "F", "NS", name="gender_enum", create_type=False))
 
+
 class Tag(Base):
     __tablename__ = "tag"
     id = Column(Integer, primary_key=True)
@@ -100,6 +101,7 @@ class Answer(Base):
 class Question(Base):
     __tablename__ = "question"
     id = Column(Integer, primary_key=True)
+
 
 class Location(Base):
     __tablename__ = "location"
