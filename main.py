@@ -279,7 +279,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             context.set_details("No location found with given location_id")
             return proto_pb2.Response()
 
-    def GetTagsFromEventId(self, request, context):
+    def GetTagsByEventId(self, request, context):
         event_id = request.id
         tags_id = []
         tags_of_event = []
@@ -297,7 +297,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             return participant_service.GetTagsFromEventIdResonse(tags=tags_of_event)
         return participant_service.GetTagsFromEventIdResonse(tags=[])
 
-    def GetRatingFromEventId(self, request, context):
+    def GetRatingByEventId(self, request, context):
         event_id = request.id
         ratings = []
 
@@ -314,7 +314,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         context.set_details("No rating found for event")
         return proto_pb2.Response()
 
-    def GetApprovedUserFromEventId(self, request, context):
+    def GetApprovedUserByEventId(self, request, context):
         event_id = request.id
         users_id = []
         approved_user = []
@@ -336,6 +336,27 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         context.set_code(grpc.StatusCode.NOT_FOUND)
         context.set_details("No approved user found for event")
         return proto_pb2.Response()
+
+    def GetEventDurationByEventId(self, request, context):
+        event_id = request.id
+        event_durations = []
+
+        event_durations_query = session.query(EventDuration).filter(
+            EventDuration.event_id == event_id).all()
+
+        if (event_durations_query):
+            for event_duration in event_durations_query:
+                start_timestamp = Timestamp()
+                finish_timestamp = Timestamp()
+                start_timestamp.FromDatetime(event_duration.start)
+                finish_timestamp.FromDatetime(event_duration.finish)
+                event_durations.append(common.EventDuration(
+                    id=event_duration.id, event_id=event_duration.event_id, start=start_timestamp, finish=finish_timestamp))
+            return participant_service.GetEventDurationByEventIdResponse(event_durations=event_durations)
+        else:
+            context.set_code(grpc.StatusCode.NOT_FOUND)
+            context.set_details("No Event Duration found for event")
+            return proto_pb2.Response()
 
     def GenerateQR(self, request, context):
         result = session.query(UserEvent).filter(
@@ -359,6 +380,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 session.close()
 
 port = os.environ.get("GRPC_PORT")
+
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
