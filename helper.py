@@ -1,5 +1,6 @@
 from google.protobuf import wrappers_pb2 as wrapper
 import base64
+import random
 
 def getInt64Value(value):
     if value is None:
@@ -18,3 +19,6 @@ def getStringValue(value):
     temp = wrapper.StringValue()
     temp.value = value
     return temp
+
+def getRandomNumber():
+            return round(random.random() * 100)
