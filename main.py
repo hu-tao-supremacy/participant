@@ -7,7 +7,7 @@ import hts.common.common_pb2 as common
 import hts.participant.service_pb2 as participant_service
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
-from db_model import Event, EventDuration, UserEvent, session, Tag, EventTag, FacilityRequest, Answer, Location, User
+from db_model import Event, EventDuration, UserEvent, session, Tag, EventTag, FacilityRequest, Answer, Location, User, QuestionGroup, Question
 from helper import getInt64Value, b64encode, getStringValue, getRandomNumber
 from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -407,7 +407,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             session.rollback()
             raise
 
-    def GetEventDurationByEventId(self, request, context):
+    def GetEventDurationsByEventId(self, request, context):
         try:
             event_id = request.id
             event_durations = []
@@ -425,6 +425,65 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                         id=event_duration.id, event_id=event_duration.event_id, start=start_timestamp, finish=finish_timestamp))
                 return participant_service.GetEventDurationByEventIdResponse(event_durations=event_durations)
             return participant_service.GetEventDurationByEventIdResponse(event_durations=[])
+        except:
+            session.rollback()
+            raise
+
+    def GetQuestionGroupsByEventId(self, request, context):
+        try:
+            event_id = request.id
+            question_groups = []
+
+            question_groups_query = session.query(QuestionGroup).filter(
+                QuestionGroup.event_id == event_id).all()
+
+            if (question_groups_query is None):
+                return participant_service.GetQuestionGroupsByEventIdResponse(question_groups=[])
+
+            for question_group_query in question_groups_query:
+                question_groups.append(common.QuestionGroup(id=question_group_query.id, event_id=question_group_query.event_id,
+                                                            type=question_group_query.type, seq=question_group_query.seq, title=question_group_query.title))
+            return participant_service.GetQuestionGroupsByEventIdResponse(question_groups=question_groups)
+
+        except:
+            session.rollback()
+            raise
+
+    def GetQuestionsByQuestionGroupId(self, request, context):
+        try:
+            question_group_id = request.id
+            questions = []
+
+            questions_query = session.query(Question).filter(
+                Question.question_group_id == question_group_id).all()
+
+            if questions_query is None:
+                return participant_service.GetQuestionsByQuestionGroupIdResponse(questions=[])
+
+            for question_query in questions_query:
+                questions.append(common.Question(id=question_query.id, question_group_id=question_query.question_group_id, seq=question_query.seq,
+                                                 answer_type=question_query.answer_type, is_optional=question_query.is_optional, title=question_query.title, subtitle=question_query.subtitle))
+            return participant_service.GetQuestionsByQuestionGroupIdResponse(questions=questions)
+
+        except:
+            session.rollback()
+            raise
+
+    def GetAnswersByQuestionId(self, request, context):
+        try:
+            question_id = request.id
+            answers = []
+
+            answers_query = session.query(Answer).filter(
+                Answer.question_id == question_id).all()
+
+            if(answers_query is None):
+                return participant_service.GetAnswersByQuestionIdResponse(answers=[])
+
+            for answer_query in answers_query:
+                answers.append(common.Answer(id=answer_query.id, user_event_id=answer_query.user_event_id,
+                                             question_id=answer_query.question_id, value=answer_query.value))
+            return participant_service.GetAnswersByQuestionIdResponse(answers=answers)
         except:
             session.rollback()
             raise
