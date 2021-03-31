@@ -7,7 +7,7 @@ import hts.common.common_pb2 as common
 import hts.participant.service_pb2 as participant_service
 import hts.participant.service_pb2_grpc as participant_service_grpc
 
-from db_model import Event, EventDuration, UserEvent, session, Tag, EventTag, FacilityRequest, Answer, Location, User
+from db_model import Event, EventDuration, UserEvent, DBSession, Tag, EventTag, FacilityRequest, Answer, Location, User, QuestionGroup, Question
 from helper import getInt64Value, b64encode, getStringValue, getRandomNumber
 from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -17,6 +17,7 @@ from sqlalchemy import func, or_
 
 class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
     def IsEventAvailable(self, request, context):
+        session = DBSession()
         try:
             event_id = request.event_id
             date = request.date
@@ -44,6 +45,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def JoinEvent(self, request, context):
+        session = DBSession()
         try:
             user_id = request.user_id
             event_id = request.event_id
@@ -68,6 +70,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def CancelEvent(self, request, context):
+        session = DBSession()
         try:
             user_id = request.user_id
             event_id = request.event_id
@@ -91,6 +94,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def SubmitAnswerForPostEventQuestion(self, request, context):
+        session = DBSession()
         try:
             answers = request.answers
             new_answers = []
@@ -133,6 +137,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def GetEventById(self, request, context):
+        session = DBSession()
         try:
             event = session.query(Event).filter(
                 Event.id == request.event_id).scalar()
@@ -145,6 +150,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def GetAllEvents(self, request, context):
+        session = DBSession()
         try:
             events = session.query(Event)
 
@@ -156,6 +162,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def GetSuggestedEvents(self, request, context):
+        session = DBSession()
         try:
             events = []
 
@@ -172,6 +179,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def GetUpcomingEvents(self, request, context):
+        session = DBSession()
         try:
             start = request.start.seconds
             end = request.end.seconds
@@ -206,6 +214,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def GetEventsByStringOfName(self, request, context):
+        session = DBSession()
         try:
             text = request.text.lower()
             if(text == ""):
@@ -222,6 +231,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def GetEventsByTagId(self, request, context):
+        session = DBSession()
         try:
             tag_id = request.id
             events_id = []
@@ -248,6 +258,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def GetEventsByFacilityId(self, request, context):
+        session = DBSession()
         try:
             facility_id = request.id
             events_id = []
@@ -274,6 +285,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def GetEventsByOrganizationId(self, request, context):
+        session = DBSession()
         try:
             organization_id = request.id
 
@@ -289,6 +301,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def GetEventsByDate(self, request, context):
+        session = DBSession()
         try:
             timestamp = request.seconds
             text = float(timestamp)
@@ -323,6 +336,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def GetLocationById(self, request, context):
+        session = DBSession()
         try:
             id = request.id
 
@@ -340,6 +354,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def GetTagsByEventId(self, request, context):
+        session = DBSession()
         try:
             event_id = request.id
             tags_id = []
@@ -362,6 +377,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def GetRatingByEventId(self, request, context):
+        session = DBSession()
         try:
             event_id = request.id
             ratings = []
@@ -383,6 +399,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def GetApprovedUserByEventId(self, request, context):
+        session = DBSession()
         try:
             event_id = request.id
             users_id = []
@@ -407,7 +424,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             session.rollback()
             raise
 
-    def GetEventDurationByEventId(self, request, context):
+    def GetEventDurationsByEventId(self, request, context):
+        session = DBSession()
         try:
             event_id = request.id
             event_durations = []
@@ -429,7 +447,70 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             session.rollback()
             raise
 
+    def GetQuestionGroupsByEventId(self, request, context):
+        session = DBSession()
+        try:
+            event_id = request.id
+            question_groups = []
+
+            question_groups_query = session.query(QuestionGroup).filter(
+                QuestionGroup.event_id == event_id).all()
+
+            if (question_groups_query is None):
+                return participant_service.GetQuestionGroupsByEventIdResponse(question_groups=[])
+
+            for question_group_query in question_groups_query:
+                question_groups.append(common.QuestionGroup(id=question_group_query.id, event_id=question_group_query.event_id,
+                                                            type=question_group_query.type, seq=question_group_query.seq, title=question_group_query.title))
+            return participant_service.GetQuestionGroupsByEventIdResponse(question_groups=question_groups)
+
+        except:
+            session.rollback()
+            raise
+
+    def GetQuestionsByQuestionGroupId(self, request, context):
+        session = DBSession()
+        try:
+            question_group_id = request.id
+            questions = []
+
+            questions_query = session.query(Question).filter(
+                Question.question_group_id == question_group_id).all()
+
+            if questions_query is None:
+                return participant_service.GetQuestionsByQuestionGroupIdResponse(questions=[])
+
+            for question_query in questions_query:
+                questions.append(common.Question(id=question_query.id, question_group_id=question_query.question_group_id, seq=question_query.seq,
+                                                 answer_type=question_query.answer_type, is_optional=question_query.is_optional, title=question_query.title, subtitle=question_query.subtitle))
+            return participant_service.GetQuestionsByQuestionGroupIdResponse(questions=questions)
+
+        except:
+            session.rollback()
+            raise
+
+    def GetAnswersByQuestionId(self, request, context):
+        session = DBSession()
+        try:
+            question_id = request.id
+            answers = []
+
+            answers_query = session.query(Answer).filter(
+                Answer.question_id == question_id).all()
+
+            if(answers_query is None):
+                return participant_service.GetAnswersByQuestionIdResponse(answers=[])
+
+            for answer_query in answers_query:
+                answers.append(common.Answer(id=answer_query.id, user_event_id=answer_query.user_event_id,
+                                             question_id=answer_query.question_id, value=answer_query.value))
+            return participant_service.GetAnswersByQuestionIdResponse(answers=answers)
+        except:
+            session.rollback()
+            raise
+
     def GenerateQR(self, request, context):
+        session = DBSession()
         try:
             result = session.query(UserEvent).filter(
                 UserEvent.id == request.user_event_id)
@@ -447,6 +528,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
 
     def Ping(self, request, context):
+        session = DBSession()
         try:
             boolvalue = BoolValue()
             boolvalue.value = True

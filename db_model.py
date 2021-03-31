@@ -101,6 +101,13 @@ class Answer(Base):
 class Question(Base):
     __tablename__ = "question"
     id = Column(Integer, primary_key=True)
+    question_group_id = Column(Integer, ForeignKey("question_group.id"))
+    seq = Column(Integer)
+    answer_type = Column(
+        Enum("SCALE", "TEXT", name="answer_type_enum", create_type=False))
+    is_optional = Column(Boolean)
+    title = Column(String)
+    subtitle = Column(String)
 
 
 class Location(Base):
@@ -113,7 +120,16 @@ class Location(Base):
     travel_information_image_hash = Column(String, nullable=True)
 
 
+class QuestionGroup(Base):
+    __tablename__ = "question_group"
+    id = Column(Integer, primary_key=True)
+    event_id = Column(Integer, ForeignKey('event.id'))
+    type = Column(
+        Enum("PRE_EVENT", "POST_EVENT", name="question_group_type_enum", create_type=False))
+    seq = Column(Integer)
+    title = Column(String)
+
+
 Base.metadata.create_all(engine)
 
 DBSession = sessionmaker(bind=engine)
-session = DBSession()
