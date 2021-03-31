@@ -43,6 +43,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def JoinEvent(self, request, context):
         session = DBSession()
@@ -68,6 +70,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def CancelEvent(self, request, context):
         session = DBSession()
@@ -92,6 +96,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def SubmitAnswerForPostEventQuestion(self, request, context):
         session = DBSession()
@@ -135,6 +141,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetEventById(self, request, context):
         session = DBSession()
@@ -148,6 +156,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetAllEvents(self, request, context):
         session = DBSession()
@@ -160,6 +170,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetSuggestedEvents(self, request, context):
         session = DBSession()
@@ -177,6 +189,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetUpcomingEvents(self, request, context):
         session = DBSession()
@@ -212,6 +226,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetEventsByStringOfName(self, request, context):
         session = DBSession()
@@ -229,6 +245,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetEventsByTagId(self, request, context):
         session = DBSession()
@@ -256,6 +274,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetEventsByFacilityId(self, request, context):
         session = DBSession()
@@ -283,6 +303,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetEventsByOrganizationId(self, request, context):
         session = DBSession()
@@ -299,6 +321,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetEventsByDate(self, request, context):
         session = DBSession()
@@ -334,6 +358,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetLocationById(self, request, context):
         session = DBSession()
@@ -352,6 +378,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetTagsByEventId(self, request, context):
         session = DBSession()
@@ -375,6 +403,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetRatingByEventId(self, request, context):
         session = DBSession()
@@ -397,6 +427,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetApprovedUserByEventId(self, request, context):
         session = DBSession()
@@ -423,6 +455,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetEventDurationsByEventId(self, request, context):
         session = DBSession()
@@ -446,6 +480,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetQuestionGroupsByEventId(self, request, context):
         session = DBSession()
@@ -467,6 +503,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetQuestionsByQuestionGroupId(self, request, context):
         session = DBSession()
@@ -488,6 +526,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GetAnswersByQuestionId(self, request, context):
         session = DBSession()
@@ -508,6 +548,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def GenerateQR(self, request, context):
         session = DBSession()
@@ -526,6 +568,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
     def Ping(self, request, context):
         session = DBSession()
@@ -536,6 +580,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         except:
             session.rollback()
             raise
+        finally:
+            session.close()
 
 
 port = os.environ.get("GRPC_PORT")
