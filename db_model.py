@@ -10,8 +10,7 @@ password = os.environ.get("POSTGRES_PASSWORD")
 host = os.environ.get("POSTGRES_HOST")
 db = os.environ.get("POSTGRES_DB")
 
-engine = create_engine('postgresql+psycopg2://'+user +
-                       ':'+password+'@'+host+'/'+db)
+engine = create_engine('postgresql://'+user+':'+password+'@'+host+'/'+db)
 
 
 class Event(Base):
