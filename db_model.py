@@ -1,4 +1,14 @@
-from sqlalchemy import create_engine, Column, ForeignKey, Integer, String, TIMESTAMP, Boolean, Enum, BigInteger
+from sqlalchemy import (
+    create_engine,
+    Column,
+    ForeignKey,
+    Integer,
+    String,
+    TIMESTAMP,
+    Boolean,
+    Enum,
+    BigInteger,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
@@ -10,11 +20,11 @@ password = os.environ.get("POSTGRES_PASSWORD")
 host = os.environ.get("POSTGRES_HOST")
 db = os.environ.get("POSTGRES_DB")
 
-engine = create_engine('postgresql://'+user+':'+password+'@'+host+'/'+db)
+engine = create_engine("postgresql://" + user + ":" + password + "@" + host + "/" + db)
 
 
 class Event(Base):
-    __tablename__ = 'event'
+    __tablename__ = "event"
     id = Column(Integer, primary_key=True)
     organization_id = Column(Integer, ForeignKey("organization.id"))
     location_id = Column(BigInteger, nullable=True)
@@ -31,26 +41,27 @@ class Event(Base):
 
 
 class EventDuration(Base):
-    __tablename__ = 'event_duration'
+    __tablename__ = "event_duration"
     id = Column(Integer, primary_key=True)
-    event_id = Column(Integer, ForeignKey('event.id'))
+    event_id = Column(Integer, ForeignKey("event.id"))
     start = Column(TIMESTAMP)
     finish = Column(TIMESTAMP)
 
 
 class UserEvent(Base):
-    __tablename__ = 'user_event'
+    __tablename__ = "user_event"
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"))
     event_id = Column(Integer, ForeignKey("event.id"))
     rating = Column(Integer, nullable=True)
     ticket = Column(String, nullable=True)
     status = Column(
-        Enum("PENDING", "APPROVED", "REJECTED", name="status_enum", create_type=False))
+        Enum("PENDING", "APPROVED", "REJECTED", name="status_enum", create_type=False)
+    )
 
 
 class User(Base):
-    __tablename__ = 'user'
+    __tablename__ = "user"
     id = Column(Integer, primary_key=True)
     first_name = Column(String)
     last_name = Column(String)
@@ -60,8 +71,7 @@ class User(Base):
     address = Column(String, nullable=True)
     profile_picture_url = Column(String, nullable=True)
     is_chula_student = Column(Boolean)
-    gender = Column(
-        Enum("M", "F", "NS", name="gender_enum", create_type=False))
+    gender = Column(Enum("M", "F", "NS", name="gender_enum", create_type=False))
 
 
 class Tag(Base):
@@ -73,8 +83,8 @@ class Tag(Base):
 class EventTag(Base):
     __tablename__ = "event_tag"
     id = Column(Integer, primary_key=True)
-    event_id = Column(Integer, ForeignKey('event.id'))
-    tag_id = Column(Integer, ForeignKey('tag.id'))
+    event_id = Column(Integer, ForeignKey("event.id"))
+    tag_id = Column(Integer, ForeignKey("tag.id"))
 
 
 class Facility(Base):
@@ -86,15 +96,15 @@ class Facility(Base):
 class FacilityRequest(Base):
     __tablename__ = "facility_request"
     id = Column(Integer, primary_key=True)
-    event_id = Column(Integer, ForeignKey('event.id'))
-    facility_id = Column(Integer, ForeignKey('facility.id'))
+    event_id = Column(Integer, ForeignKey("event.id"))
+    facility_id = Column(Integer, ForeignKey("facility.id"))
 
 
 class Answer(Base):
     __tablename__ = "answer"
     id = Column(Integer, primary_key=True)
-    user_event_id = Column(Integer, ForeignKey('user_event.id'))
-    question_id = Column(Integer, ForeignKey('question.id'))
+    user_event_id = Column(Integer, ForeignKey("user_event.id"))
+    question_id = Column(Integer, ForeignKey("question.id"))
     value = Column(String)
 
 
@@ -104,7 +114,8 @@ class Question(Base):
     question_group_id = Column(Integer, ForeignKey("question_group.id"))
     seq = Column(Integer)
     answer_type = Column(
-        Enum("SCALE", "TEXT", name="answer_type_enum", create_type=False))
+        Enum("SCALE", "TEXT", name="answer_type_enum", create_type=False)
+    )
     is_optional = Column(Boolean)
     title = Column(String)
     subtitle = Column(String)
@@ -123,9 +134,15 @@ class Location(Base):
 class QuestionGroup(Base):
     __tablename__ = "question_group"
     id = Column(Integer, primary_key=True)
-    event_id = Column(Integer, ForeignKey('event.id'))
+    event_id = Column(Integer, ForeignKey("event.id"))
     type = Column(
-        Enum("PRE_EVENT", "POST_EVENT", name="question_group_type_enum", create_type=False))
+        Enum(
+            "PRE_EVENT",
+            "POST_EVENT",
+            name="question_group_type_enum",
+            create_type=False,
+        )
+    )
     seq = Column(Integer)
     title = Column(String)
 
