@@ -21,7 +21,14 @@ from db_model import (
     QuestionGroup,
     Question,
 )
-from helper import getInt32Value, b64encode, getStringValue, getRandomNumber
+from helper import (
+    getInt32Value,
+    b64encode,
+    getStringValue,
+    getRandomNumber,
+    throwError,
+    getEventsByIds,
+)
 from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
 from google.protobuf.wrappers_pb2 import BoolValue
@@ -35,20 +42,18 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             event_id = request.event_id
             date = request.date
 
-            result = (
+            query_event_duration = (
                 session.query(EventDuration)
                 .filter(EventDuration.event_id == event_id)
                 .order_by(EventDuration.start)
                 .first()
             )
 
-            if result is None:
-                context.set_code(grpc.StatusCode.NOT_FOUND)
-                context.set_details("Event not found")
-                return proto_pb2.Response()
+            if query_event_duration is None:
+                throwError("Event not found.", grpc.StatusCode.NOT_FOUND, context)
 
             timestamp = Timestamp()
-            timestamp.FromDatetime(result.start)
+            timestamp.FromDatetime(query_event_duration.start)
             boolvalue = BoolValue()
 
             if timestamp.seconds > date.seconds:
@@ -69,14 +74,16 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             user_id = request.user_id
             event_id = request.event_id
 
-            result = session.query(UserEvent).filter(
+            query_user_event = session.query(UserEvent).filter(
                 UserEvent.user_id == user_id, UserEvent.event_id == event_id
             )
 
-            if result.scalar():
-                context.set_code(grpc.StatusCode.ALREADY_EXISTS)
-                context.set_details("User already send request this event.")
-                return proto_pb2.Response()
+            if query_user_event.scalar():
+                throwError(
+                    "User already send request to this event.",
+                    grpc.StatusCode.ALREADY_EXISTS,
+                    context,
+                )
 
             new_user_event = UserEvent(
                 user_id=user_id,
@@ -88,14 +95,18 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             session.add(new_user_event)
             session.commit()
 
-            added_user_event = result.scalar()
-            return common.UserEvent(
-                id=added_user_event.id,
-                user_id=added_user_event.user_id,
-                event_id=added_user_event.event_id,
-                rating=getInt32Value(added_user_event.rating),
-                ticket=getStringValue(added_user_event.ticket),
-                status=added_user_event.status,
+            added_user_event = query_user_event.scalar()
+            if added_user_event:
+                return common.UserEvent(
+                    id=added_user_event.id,
+                    user_id=added_user_event.user_id,
+                    event_id=added_user_event.event_id,
+                    rating=getInt32Value(added_user_event.rating),
+                    ticket=getStringValue(added_user_event.ticket),
+                    status=added_user_event.status,
+                )
+            throwError(
+                "Database didn't update User Event.", grpc.StatusCode.INTERNAL, context
             )
         except:
             session.rollback()
@@ -109,17 +120,18 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             user_id = request.user_id
             event_id = request.event_id
 
-            results = (
+            query_user_event = (
                 session.query(UserEvent)
                 .filter(UserEvent.user_id == user_id, UserEvent.event_id == event_id)
                 .scalar()
             )
 
-            if results:
+            if query_user_event:
                 event = session.query(Event).filter(Event.id == event_id).scalar()
 
-                session.delete(results)
+                session.delete(query_user_event)
                 session.commit()
+
                 return common.Event(
                     id=event.id,
                     organization_id=event.organization_id,
@@ -136,9 +148,11 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     contact=getStringValue(event.contact),
                 )
 
-            context.set_code(grpc.StatusCode.NOT_FOUND)
-            context.set_details("User have not joined this event.")
-            return proto_pb2.Response()
+            throwError(
+                "User have not yet request to join this event.",
+                grpc.StatusCode.NOT_FOUND,
+                context,
+            )
         except:
             session.rollback()
             raise
@@ -149,31 +163,36 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         session = DBSession()
         try:
             answers = request.answers
-            new_answers = []
             user_event_id = request.user_event_id
 
-            user_event_answer = session.query(Answer).filter(
+            new_answers = []
+
+            query_answers = session.query(Answer).filter(
                 Answer.user_event_id == user_event_id
             )
+
             for answer in answers:
-                unique_answer = user_event_answer.filter(
+                query_unique_answer = query_answers.filter(
                     Answer.question_id == answer.question_id
                 )
-                if unique_answer.first() is None:
+                if query_unique_answer.scalar() is None:
                     new_answers.append(answer)
 
             if not new_answers:
-                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-                context.set_details("User already gave feedback")
-                return proto_pb2.Response()
+                throwError(
+                    "User already gave feedback.",
+                    grpc.StatusCode.INVALID_ARGUMENT,
+                    context,
+                )
 
-            user_event = (
-                session.query(UserEvent).filter(UserEvent.id == user_event_id).first()
+            query_user_event = (
+                session.query(UserEvent).filter(UserEvent.id == user_event_id).scalar()
             )
-            if user_event is None:
-                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-                context.set_details("User Event not found")
-                return proto_pb2.Response()
+
+            if query_user_event is None:
+                throwError(
+                    "User Event not found.", grpc.StatusCode.INVALID_ARGUMENT, context
+                )
 
             for answer in new_answers:
                 question_id = answer.question_id
@@ -193,7 +212,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     question_id=result.question_id,
                     value=result.value,
                 ),
-                user_event_answer.all(),
+                query_answers.all(),
             )
 
             return participant_service.SubmitAnswerForPostEventQuestionResponse(
@@ -208,25 +227,28 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
     def GetEventById(self, request, context):
         session = DBSession()
         try:
-            event = session.query(Event).filter(Event.id == request.event_id).scalar()
+            query_event = (
+                session.query(Event).filter(Event.id == request.event_id).scalar()
+            )
 
-            if event is not None:
+            if query_event is not None:
                 return common.Event(
-                    id=event.id,
-                    organization_id=event.organization_id,
-                    location_id=getInt32Value(event.location_id),
-                    description=event.description,
-                    name=event.name,
-                    cover_image_url=getStringValue(event.cover_image_url),
-                    cover_image_hash=getStringValue(event.cover_image_hash),
-                    poster_image_url=getStringValue(event.poster_image_url),
-                    poster_image_hash=getStringValue(event.poster_image_hash),
-                    profile_image_url=getStringValue(event.profile_image_url),
-                    profile_image_hash=getStringValue(event.profile_image_hash),
-                    attendee_limit=event.attendee_limit,
-                    contact=getStringValue(event.contact),
+                    id=query_event.id,
+                    organization_id=query_event.organization_id,
+                    location_id=getInt32Value(query_event.location_id),
+                    description=query_event.description,
+                    name=query_event.name,
+                    cover_image_url=getStringValue(query_event.cover_image_url),
+                    cover_image_hash=getStringValue(query_event.cover_image_hash),
+                    poster_image_url=getStringValue(query_event.poster_image_url),
+                    poster_image_hash=getStringValue(query_event.poster_image_hash),
+                    profile_image_url=getStringValue(query_event.profile_image_url),
+                    profile_image_hash=getStringValue(query_event.profile_image_hash),
+                    attendee_limit=query_event.attendee_limit,
+                    contact=getStringValue(query_event.contact),
                 )
-            return common.Event()
+
+            throwError("Event not found.", grpc.StatusCode.NOT_FOUND, context)
         except:
             session.rollback()
             raise
@@ -236,7 +258,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
     def GetAllEvents(self, request, context):
         session = DBSession()
         try:
-            events = session.query(Event)
+            query_events = session.query(Event).all()
 
             data = map(
                 lambda event: common.Event(
@@ -254,7 +276,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     attendee_limit=event.attendee_limit,
                     contact=getStringValue(event.contact),
                 ),
-                events,
+                query_events,
             )
             return participant_service.EventsResponse(event=data)
         except:
@@ -269,25 +291,35 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             events = []
 
             for i in range(0, 10):
-                event = (
+                query_event = (
                     session.query(Event).filter(Event.id == getRandomNumber()).scalar()
                 )
-                if event is not None:
+                if query_event is not None:
                     events.append(
                         common.Event(
-                            id=event.id,
-                            organization_id=event.organization_id,
-                            location_id=getInt32Value(event.location_id),
-                            description=event.description,
-                            name=event.name,
-                            cover_image_url=getStringValue(event.cover_image_url),
-                            cover_image_hash=getStringValue(event.cover_image_hash),
-                            poster_image_url=getStringValue(event.poster_image_url),
-                            poster_image_hash=getStringValue(event.poster_image_hash),
-                            profile_image_url=getStringValue(event.profile_image_url),
-                            profile_image_hash=getStringValue(event.profile_image_hash),
-                            attendee_limit=event.attendee_limit,
-                            contact=getStringValue(event.contact),
+                            id=query_event.id,
+                            organization_id=query_event.organization_id,
+                            location_id=getInt32Value(query_event.location_id),
+                            description=query_event.description,
+                            name=query_event.name,
+                            cover_image_url=getStringValue(query_event.cover_image_url),
+                            cover_image_hash=getStringValue(
+                                query_event.cover_image_hash
+                            ),
+                            poster_image_url=getStringValue(
+                                query_event.poster_image_url
+                            ),
+                            poster_image_hash=getStringValue(
+                                query_event.poster_image_hash
+                            ),
+                            profile_image_url=getStringValue(
+                                query_event.profile_image_url
+                            ),
+                            profile_image_hash=getStringValue(
+                                query_event.profile_image_hash
+                            ),
+                            attendee_limit=query_event.attendee_limit,
+                            contact=getStringValue(query_event.contact),
                         )
                     )
 
@@ -304,15 +336,11 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             start = request.start.seconds
             end = request.end.seconds
             text = [float(start), float(end)]
-            if text[0] == 0 or text[1] == 0:
-                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-                context.set_details("Wrong timestamp format.")
-                return proto_pb2.Response()
 
             start_date = datetime.fromtimestamp(text[0])
             end_date = datetime.fromtimestamp(text[1])
 
-            event_durations = (
+            query_event_durations = (
                 session.query(EventDuration)
                 .filter(
                     EventDuration.start >= start_date, EventDuration.start < end_date
@@ -320,34 +348,14 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 .all()
             )
 
-            events_id = []
             date_events = []
+            events_id = map(
+                lambda event_duration: (event_duration.event_id), query_event_durations
+            )
 
-            for event_duration in event_durations:
-                events_id.append(event_duration.event_id)
-            for event_id in events_id:
-                event = session.query(Event).filter(Event.id == event_id).scalar()
-                if event is not None:
-                    date_events.append(
-                        common.Event(
-                            id=event.id,
-                            organization_id=event.organization_id,
-                            location_id=getInt32Value(event.location_id),
-                            description=event.description,
-                            name=event.name,
-                            cover_image_url=getStringValue(event.cover_image_url),
-                            cover_image_hash=getStringValue(event.cover_image_hash),
-                            poster_image_url=getStringValue(event.poster_image_url),
-                            poster_image_hash=getStringValue(event.poster_image_hash),
-                            profile_image_url=getStringValue(event.profile_image_url),
-                            profile_image_hash=getStringValue(event.profile_image_hash),
-                            attendee_limit=event.attendee_limit,
-                            contact=getStringValue(event.contact),
-                        )
-                    )
-            if date_events:
-                return participant_service.EventsResponse(event=date_events)
-            return participant_service.EventsResponse(event=[])
+            date_events = getEventsByIds(events_id=events_id, session=session)
+
+            return participant_service.EventsResponse(event=date_events)
         except:
             session.rollback()
             raise
@@ -392,38 +400,16 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         session = DBSession()
         try:
             tag_id = request.id
-            events_id = []
-            tag_events = []
 
-            events = session.query(EventTag).filter(EventTag.tag_id == tag_id).all()
+            query_event_tags = (
+                session.query(EventTag).filter(EventTag.tag_id == tag_id).all()
+            )
 
-            for event in events:
-                events_id.append(event.id)
+            events_id = map(lambda event: event.id, query_event_tags)
 
-            for event_id in events_id:
-                event = session.query(Event).filter(Event.id == event_id).scalar()
-                if event is not None:
-                    tag_events.append(
-                        common.Event(
-                            id=event.id,
-                            organization_id=event.organization_id,
-                            location_id=getInt32Value(event.location_id),
-                            description=event.description,
-                            name=event.name,
-                            cover_image_url=getStringValue(event.cover_image_url),
-                            cover_image_hash=getStringValue(event.cover_image_hash),
-                            poster_image_url=getStringValue(event.poster_image_url),
-                            poster_image_hash=getStringValue(event.poster_image_hash),
-                            profile_image_url=getStringValue(event.profile_image_url),
-                            profile_image_hash=getStringValue(event.profile_image_hash),
-                            attendee_limit=event.attendee_limit,
-                            contact=getStringValue(event.contact),
-                        )
-                    )
+            tag_events = getEventsByIds(events_id=events_id, session=session)
 
-            if tag_events:
-                return participant_service.EventsResponse(event=tag_events)
-            return participant_service.EventsResponse(event=[])
+            return participant_service.EventsResponse(event=tag_events)
         except:
             session.rollback()
             raise
@@ -434,42 +420,20 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         session = DBSession()
         try:
             facility_id = request.id
-            events_id = []
-            facility_events = []
 
-            facility_requests = (
+            query_facility_requests = (
                 session.query(FacilityRequest)
                 .filter(FacilityRequest.facility_id == facility_id)
                 .all()
             )
 
-            for facility_request in facility_requests:
-                events_id.append(facility_request.event_id)
+            events_id = map(
+                lambda facility_request: facility_request.event_id,
+                query_facility_requests,
+            )
+            facility_events = getEventsByIds(events_id=events_id, session=session)
 
-            for event_id in events_id:
-                event = session.query(Event).filter(Event.id == event_id).scalar()
-                if event is not None:
-                    facility_events.append(
-                        common.Event(
-                            id=event.id,
-                            organization_id=event.organization_id,
-                            location_id=getInt32Value(event.location_id),
-                            description=event.description,
-                            name=event.name,
-                            cover_image_url=getStringValue(event.cover_image_url),
-                            cover_image_hash=getStringValue(event.cover_image_hash),
-                            poster_image_url=getStringValue(event.poster_image_url),
-                            poster_image_hash=getStringValue(event.poster_image_hash),
-                            profile_image_url=getStringValue(event.profile_image_url),
-                            profile_image_hash=getStringValue(event.profile_image_hash),
-                            attendee_limit=event.attendee_limit,
-                            contact=getStringValue(event.contact),
-                        )
-                    )
-
-            if facility_events:
-                return participant_service.EventsResponse(event=facility_events)
-            return participant_service.EventsResponse(event=[])
+            return participant_service.EventsResponse(event=facility_events)
         except:
             session.rollback()
             raise
@@ -481,7 +445,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         try:
             organization_id = request.id
 
-            results = (
+            query_events = (
                 session.query(Event)
                 .filter(Event.organization_id == organization_id)
                 .all()
@@ -503,7 +467,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     attendee_limit=event.attendee_limit,
                     contact=getStringValue(event.contact),
                 ),
-                results,
+                query_events,
             )
 
             return participant_service.EventsResponse(event=events)
@@ -518,16 +482,12 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         try:
             timestamp = request.seconds
             text = float(timestamp)
-            if text == 0:
-                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-                context.set_details("Wrong timestamp format.")
-                return proto_pb2.Response()
 
             date = datetime.fromtimestamp(text)
             start_date = datetime(date.year, date.month, date.day, 0, 0, 0)
             end_date = datetime(date.year, date.month, date.day + 1, 0, 0, 0)
 
-            event_durations = (
+            query_event_durations = (
                 session.query(EventDuration)
                 .filter(
                     EventDuration.start >= start_date, EventDuration.start < end_date
@@ -535,34 +495,12 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 .all()
             )
 
-            events_id = []
-            date_events = []
+            events_id = map(
+                lambda event_duration: event_duration.event_id, query_event_durations
+            )
+            date_events = getEventsByIds(events_id=events_id, session=session)
 
-            for event_duration in event_durations:
-                events_id.append(event_duration.event_id)
-            for event_id in events_id:
-                event = session.query(Event).filter(Event.id == event_id).scalar()
-                if event is not None:
-                    date_events.append(
-                        common.Event(
-                            id=event.id,
-                            organization_id=event.organization_id,
-                            location_id=getInt32Value(event.location_id),
-                            description=event.description,
-                            name=event.name,
-                            cover_image_url=getStringValue(event.cover_image_url),
-                            cover_image_hash=getStringValue(event.cover_image_hash),
-                            poster_image_url=getStringValue(event.poster_image_url),
-                            poster_image_hash=getStringValue(event.poster_image_hash),
-                            profile_image_url=getStringValue(event.profile_image_url),
-                            profile_image_hash=getStringValue(event.profile_image_hash),
-                            attendee_limit=event.attendee_limit,
-                            contact=getStringValue(event.contact),
-                        )
-                    )
-            if date_events:
-                return participant_service.EventsResponse(event=date_events)
-            return participant_service.EventsResponse(event=[])
+            return participant_service.EventsResponse(event=date_events)
         except:
             session.rollback()
             raise
@@ -574,25 +512,22 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         try:
             id = request.id
 
-            location = session.query(Location).filter(Location.id == id).scalar()
+            query_location = session.query(Location).filter(Location.id == id).scalar()
 
-            if location:
+            if query_location:
                 return common.Location(
-                    id=location.id,
-                    name=location.name,
-                    google_map_url=location.google_map_url,
-                    description=getStringValue(location.description),
+                    id=query_location.id,
+                    name=query_location.name,
+                    google_map_url=query_location.google_map_url,
+                    description=getStringValue(query_location.description),
                     travel_information_image_url=getStringValue(
-                        location.travel_information_image_url
+                        query_location.travel_information_image_url
                     ),
                     travel_information_image_hash=getStringValue(
-                        location.travel_information_image_hash
+                        query_location.travel_information_image_hash
                     ),
                 )
-            else:
-                context.set_code(grpc.StatusCode.NOT_FOUND)
-                context.set_details("No location found with given location_id")
-                return proto_pb2.Response()
+            throwError("No location found with given location_id", grpc.StatusCode.NOT_FOUND, context)
         except:
             session.rollback()
             raise
