@@ -7,7 +7,6 @@ from sqlalchemy import (
     TIMESTAMP,
     Boolean,
     Enum,
-    BigInteger,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -27,7 +26,7 @@ class Event(Base):
     __tablename__ = "event"
     id = Column(Integer, primary_key=True)
     organization_id = Column(Integer, ForeignKey("organization.id"))
-    location_id = Column(BigInteger, nullable=True)
+    location_id = Column(Integer, nullable=True)
     description = Column(String)
     name = Column(String)
     cover_image_url = Column(String, nullable=True)

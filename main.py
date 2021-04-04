@@ -21,7 +21,7 @@ from db_model import (
     QuestionGroup,
     Question,
 )
-from helper import getInt64Value, b64encode, getStringValue, getRandomNumber
+from helper import getInt32Value, b64encode, getStringValue, getRandomNumber
 from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
 from google.protobuf.wrappers_pb2 import BoolValue
@@ -93,7 +93,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 id=added_user_event.id,
                 user_id=added_user_event.user_id,
                 event_id=added_user_event.event_id,
-                rating=getInt64Value(added_user_event.rating),
+                rating=getInt32Value(added_user_event.rating),
                 ticket=getStringValue(added_user_event.ticket),
                 status=added_user_event.status,
             )
@@ -123,7 +123,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 return common.Event(
                     id=event.id,
                     organization_id=event.organization_id,
-                    location_id=getInt64Value(event.location_id),
+                    location_id=getInt32Value(event.location_id),
                     description=event.description,
                     name=event.name,
                     cover_image_url=getStringValue(event.cover_image_url),
@@ -214,7 +214,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 return common.Event(
                     id=event.id,
                     organization_id=event.organization_id,
-                    location_id=getInt64Value(event.location_id),
+                    location_id=getInt32Value(event.location_id),
                     description=event.description,
                     name=event.name,
                     cover_image_url=getStringValue(event.cover_image_url),
@@ -242,7 +242,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 lambda event: common.Event(
                     id=event.id,
                     organization_id=event.organization_id,
-                    location_id=getInt64Value(event.location_id),
+                    location_id=getInt32Value(event.location_id),
                     description=event.description,
                     name=event.name,
                     cover_image_url=getStringValue(event.cover_image_url),
@@ -277,7 +277,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                         common.Event(
                             id=event.id,
                             organization_id=event.organization_id,
-                            location_id=getInt64Value(event.location_id),
+                            location_id=getInt32Value(event.location_id),
                             description=event.description,
                             name=event.name,
                             cover_image_url=getStringValue(event.cover_image_url),
@@ -332,7 +332,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                         common.Event(
                             id=event.id,
                             organization_id=event.organization_id,
-                            location_id=getInt64Value(event.location_id),
+                            location_id=getInt32Value(event.location_id),
                             description=event.description,
                             name=event.name,
                             cover_image_url=getStringValue(event.cover_image_url),
@@ -366,7 +366,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 lambda event: common.Event(
                     id=event.id,
                     organization_id=event.organization_id,
-                    location_id=getInt64Value(event.location_id),
+                    location_id=getInt32Value(event.location_id),
                     description=event.description,
                     name=event.name,
                     cover_image_url=getStringValue(event.cover_image_url),
@@ -407,7 +407,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                         common.Event(
                             id=event.id,
                             organization_id=event.organization_id,
-                            location_id=getInt64Value(event.location_id),
+                            location_id=getInt32Value(event.location_id),
                             description=event.description,
                             name=event.name,
                             cover_image_url=getStringValue(event.cover_image_url),
@@ -453,7 +453,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                         common.Event(
                             id=event.id,
                             organization_id=event.organization_id,
-                            location_id=getInt64Value(event.location_id),
+                            location_id=getInt32Value(event.location_id),
                             description=event.description,
                             name=event.name,
                             cover_image_url=getStringValue(event.cover_image_url),
@@ -491,7 +491,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 lambda event: common.Event(
                     id=event.id,
                     organization_id=event.organization_id,
-                    location_id=getInt64Value(event.location_id),
+                    location_id=getInt32Value(event.location_id),
                     description=event.description,
                     name=event.name,
                     cover_image_url=getStringValue(event.cover_image_url),
@@ -547,7 +547,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                         common.Event(
                             id=event.id,
                             organization_id=event.organization_id,
-                            location_id=getInt64Value(event.location_id),
+                            location_id=getInt32Value(event.location_id),
                             description=event.description,
                             name=event.name,
                             cover_image_url=getStringValue(event.cover_image_url),

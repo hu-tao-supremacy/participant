@@ -3,10 +3,10 @@ import base64
 import random
 
 
-def getInt64Value(value):
+def getInt32Value(value):
     if value is None:
         return None
-    temp = wrapper.Int64Value()
+    temp = wrapper.Int32Value()
     temp.value = value
     return temp
 
