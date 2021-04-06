@@ -527,7 +527,11 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                         query_location.travel_information_image_hash
                     ),
                 )
-            throwError("No location found with given location_id", grpc.StatusCode.NOT_FOUND, context)
+            throwError(
+                "No location found with given location_id",
+                grpc.StatusCode.NOT_FOUND,
+                context,
+            )
         except:
             session.rollback()
             raise
@@ -564,19 +568,17 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             event_id = request.id
             ratings = []
 
-            user_events_by_event_id = (
+            query_user_events = (
                 session.query(UserEvent).filter(UserEvent.event_id == event_id).all()
             )
 
-            if user_events_by_event_id:
-                for user_event in user_events_by_event_id:
+            if query_user_events:
+                for user_event in query_user_events:
                     temp = user_event.rating
                     if temp is not None:
                         ratings.append(temp)
                 return participant_service.GetRatingByEventIdResponse(result=ratings)
-            context.set_code(grpc.StatusCode.NOT_FOUND)
-            context.set_details("No rating found for event")
-            return proto_pb2.Response()
+            throwError("No rating found for event.", grpc.StatusCode.NOT_FOUND, context)
         except:
             session.rollback()
             raise
@@ -590,14 +592,14 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             users_id = []
             approved_user = []
 
-            user_events_by_event_id = (
+            query_user_events = (
                 session.query(UserEvent)
                 .filter(UserEvent.event_id == event_id, UserEvent.status == "APPROVED")
                 .all()
             )
 
-            if user_events_by_event_id:
-                for user_event in user_events_by_event_id:
+            if query_user_events:
+                for user_event in query_user_events:
                     user_id = user_event.user_id
                     users_id.append(user_id)
                 users = (
@@ -639,14 +641,14 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             event_id = request.id
             event_durations = []
 
-            event_durations_query = (
+            query_event_durations = (
                 session.query(EventDuration)
                 .filter(EventDuration.event_id == event_id)
                 .all()
             )
 
-            if event_durations_query:
-                for event_duration in event_durations_query:
+            if query_event_durations:
+                for event_duration in query_event_durations:
                     start_timestamp = Timestamp()
                     finish_timestamp = Timestamp()
                     start_timestamp.FromDatetime(event_duration.start)
@@ -677,18 +679,18 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             event_id = request.id
             question_groups = []
 
-            question_groups_query = (
+            query_question_groups = (
                 session.query(QuestionGroup)
                 .filter(QuestionGroup.event_id == event_id)
                 .all()
             )
 
-            if question_groups_query is None:
+            if query_question_groups is None:
                 return participant_service.GetQuestionGroupsByEventIdResponse(
                     question_groups=[]
                 )
 
-            for question_group_query in question_groups_query:
+            for question_group_query in query_question_groups:
                 question_groups.append(
                     common.QuestionGroup(
                         id=question_group_query.id,
@@ -714,18 +716,18 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             question_group_id = request.id
             questions = []
 
-            questions_query = (
+            query_questions = (
                 session.query(Question)
                 .filter(Question.question_group_id == question_group_id)
                 .all()
             )
 
-            if questions_query is None:
+            if query_questions is None:
                 return participant_service.GetQuestionsByQuestionGroupIdResponse(
                     questions=[]
                 )
 
-            for question_query in questions_query:
+            for question_query in query_questions:
                 questions.append(
                     common.Question(
                         id=question_query.id,
@@ -753,14 +755,14 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             question_id = request.id
             answers = []
 
-            answers_query = (
+            query_answers = (
                 session.query(Answer).filter(Answer.question_id == question_id).all()
             )
 
-            if answers_query is None:
+            if query_answers is None:
                 return participant_service.GetAnswersByQuestionIdResponse(answers=[])
 
-            for answer_query in answers_query:
+            for answer_query in query_answers:
                 answers.append(
                     common.Answer(
                         id=answer_query.id,
@@ -779,10 +781,10 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
     def GenerateQR(self, request, context):
         session = DBSession()
         try:
-            result = session.query(UserEvent).filter(
+            query_result = session.query(UserEvent).filter(
                 UserEvent.id == request.user_event_id
             )
-            if result.scalar():
+            if query_result.scalar():
                 user_event = {
                     "use_event_id": request.user_event_id,
                     "user_id": request.user_id,
@@ -790,10 +792,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 }
                 string_user_event = b64encode(str(user_event))
                 return participant_service.GenerateQRResponse(data=string_user_event)
-            else:
-                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-                context.set_details("UserEvent not found")
-                return proto_pb2.Response()
+
+            throwError("UserEvent not found.", grpc.StatusCode.NOT_FOUND, context)
+
         except:
             session.rollback()
             raise
