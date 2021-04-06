@@ -854,8 +854,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                         id=user_event.id,
                         user_id=user_event.user_id,
                         event_id=user_event.event_id,
-                        rating=user_event.rating,
-                        ticket=user_event.ticket,
+                        rating=getInt32Value(user_event.rating),
+                        ticket=getStringValue(user_event.ticket),
                         status=user_event.status,
                     )
             else:
@@ -868,8 +868,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                         id=user_event.id,
                         user_id=user_event.user_id,
                         event_id=user_event.event_id,
-                        rating=user_event.rating,
-                        ticket=user_event.ticket,
+                        rating=getInt32Value(user_event.rating),
+                        ticket=getStringValue(user_event.ticket),
                         status=user_event.status,
                     )
             throwError("User Event not found", grpc.StatusCode.NOT_FOUND, context)
