@@ -884,13 +884,39 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         try:
             user_id = request.user_id
 
+            query_user_events = (
+                session.query(UserEvent, Event)
+                .filter(UserEvent.event_id == Event.id)
+                .filter(UserEvent.user_id == user_id)
+                .all()
+            )
+
+            events = map(
+                lambda event: common.Event(
+                    id=event.Event.id,
+                    organization_id=event.Event.organization_id,
+                    location_id=getInt32Value(event.Event.location_id),
+                    description=event.Event.description,
+                    name=event.Event.name,
+                    cover_image_url=getStringValue(event.Event.cover_image_url),
+                    cover_image_hash=getStringValue(event.Event.cover_image_hash),
+                    poster_image_url=getStringValue(event.Event.poster_image_url),
+                    poster_image_hash=getStringValue(event.Event.poster_image_hash),
+                    profile_image_url=getStringValue(event.Event.profile_image_url),
+                    profile_image_hash=getStringValue(event.Event.profile_image_hash),
+                    attendee_limit=event.Event.attendee_limit,
+                    contact=getStringValue(event.Event.contact),
+                ),
+                query_user_events,
+            )
+
+            return participant_service.EventsResponse(event=events)
 
         except:
             session.rollback()
             raise
         finally:
             session.close()
-
 
     def GenerateQR(self, request, context):
         session = DBSession()
