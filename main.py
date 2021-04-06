@@ -285,6 +285,19 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         finally:
             session.close()
 
+    def GetAllTags(self, request, context):
+        session = DBSession()
+        try:
+            query_tags = session.query(Tag).all()
+
+            data = map(lambda tag: common.Tag(id=tag.id, name=tag.name),query_tags)
+            return participant_service.TagsResponse(tags=data)
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
     def GetSuggestedEvents(self, request, context):
         session = DBSession()
         try:
@@ -771,6 +784,31 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             raise
         finally:
             session.close()
+
+    def GetUserAnswersByQuestionId(self, request, context):
+        session = DBSession()
+        try:
+            user_id = request.user_id
+            question_id = request.question_id
+
+
+
+
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    # def GetUserEventsByUserId(self, request, context):
+    #     session = DBSession()
+    #     try:
+
+    #     except:
+    #         session.rollback()
+    #         raise
+    #     finally:
+    #         session.close()
 
     def GenerateQR(self, request, context):
         session = DBSession()
