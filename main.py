@@ -553,9 +553,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 tag = session.query(Tag).filter(Tag.id == tag_id).scalar()
                 if tag is not None:
                     tags_of_event.append(common.Tag(id=tag.id, name=tag.name))
-            if tags_of_event:
-                return participant_service.GetTagsByEventIdResponse(tags=tags_of_event)
-            return participant_service.GetTagsByEventIdResponse(tags=[])
+            return participant_service.GetTagsByEventIdResponse(tags=tags_of_event)
         except:
             session.rollback()
             raise
@@ -625,10 +623,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                                 gender=user.gender,
                             )
                         )
-                    return participant_service.GetApprovedUserByEventIdResponse(
-                        users=approved_user
-                    )
-            return participant_service.GetApprovedUserByEventIdResponse(users=[])
+            return participant_service.GetApprovedUserByEventIdResponse(
+                users=approved_user
+            )
         except:
             session.rollback()
             raise
@@ -661,11 +658,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                             finish=finish_timestamp,
                         )
                     )
-                return participant_service.GetEventDurationByEventIdResponse(
-                    event_durations=event_durations
-                )
-            return participant_service.GetEventDurationByEventIdResponse(
-                event_durations=[]
+            return participant_service.GetEventDurationsByEventIdResponse(
+                event_durations=event_durations
             )
         except:
             session.rollback()
