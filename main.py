@@ -290,7 +290,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         try:
             query_tags = session.query(Tag).all()
 
-            data = map(lambda tag: common.Tag(id=tag.id, name=tag.name),query_tags)
+            data = map(lambda tag: common.Tag(id=tag.id, name=tag.name), query_tags)
             return participant_service.TagsResponse(tags=data)
         except:
             session.rollback()
@@ -785,13 +785,104 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         finally:
             session.close()
 
-    def GetUserAnswersByQuestionId(self, request, context):
+    def GetUserAnswerByQuestionId(self, request, context):
         session = DBSession()
         try:
             user_id = request.user_id
             question_id = request.question_id
+            selected_user_event_id = []
 
+            query_user_events = (
+                session.query(UserEvent).filter(UserEvent.user_id == user_id).all()
+            )
 
+            selected_user_event_id = map(
+                lambda query_user_event: query_user_event.id, query_user_events
+            )
+
+            query_answer = (
+                session.query(Answer)
+                .filter(
+                    Answer.question_id == question_id,
+                    Answer.user_event_id.in_(selected_user_event_id),
+                )
+                .scalar()
+            )
+
+            if query_answer:
+                return common.Answer(
+                    id=query_answer.id,
+                    user_event_id=query_answer.user_event_id,
+                    question_id=query_answer.question_id,
+                    value=query_answer.value,
+                )
+            throwError("No Answers found for User.", grpc.StatusCode.NOT_FOUND, context)
+
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    def GetUserEventByUserAndEventId(self, request, context):
+        session = DBSession()
+        try:
+            user_id = request.user_id
+            event_id = request.event_id
+            status = request.status
+            status_type = None
+
+            if status == 1:
+                status_type = "PENDING"
+            elif status == 2:
+                status_type = "APPROVED"
+            elif status == 3:
+                status_type = "REJECTED"
+
+            if status_type is not None:
+                query_user_event_with_status = session.query(UserEvent).filter(
+                    UserEvent.user_id == user_id,
+                    UserEvent.event_id == event_id,
+                    UserEvent.status == status_type,
+                )
+
+                a = query_user_event_with_status.scalar()
+
+                if query_user_event_with_status.scalar():
+                    user_event = query_user_event_with_status.scalar()
+                    return common.UserEvent(
+                        id=user_event.id,
+                        user_id=user_event.user_id,
+                        event_id=user_event.event_id,
+                        rating=user_event.rating,
+                        ticket=user_event.ticket,
+                        status=user_event.status,
+                    )
+            else:
+                query_user_event = session.query(UserEvent).filter(
+                    UserEvent.user_id == user_id, UserEvent.event_id == event_id
+                )
+                if query_user_event.scalar():
+                    user_event = query_user_event.scalar()
+                    return common.UserEvent(
+                        id=user_event.id,
+                        user_id=user_event.user_id,
+                        event_id=user_event.event_id,
+                        rating=user_event.rating,
+                        ticket=user_event.ticket,
+                        status=user_event.status,
+                    )
+            throwError("User Event not found", grpc.StatusCode.NOT_FOUND, context)
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    def GetEventsByUserId(self, request, context):
+        session = DBSession()
+        try:
+            user_id = request.user_id
 
 
         except:
@@ -800,15 +891,6 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         finally:
             session.close()
 
-    # def GetUserEventsByUserId(self, request, context):
-    #     session = DBSession()
-    #     try:
-
-    #     except:
-    #         session.rollback()
-    #         raise
-    #     finally:
-    #         session.close()
 
     def GenerateQR(self, request, context):
         session = DBSession()
