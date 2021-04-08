@@ -24,6 +24,10 @@ engine = create_engine("postgresql://" + user + ":" + password + "@" + host + "/
 
 class Event(Base):
     __tablename__ = "event"
+
+    def __str__(self):
+        return str(self.__class__) + ": " + str(self.__dict__)
+
     id = Column(Integer, primary_key=True)
     organization_id = Column(Integer, ForeignKey("organization.id"))
     location_id = Column(Integer, nullable=True)
@@ -41,6 +45,10 @@ class Event(Base):
 
 class EventDuration(Base):
     __tablename__ = "event_duration"
+
+    def __str__(self):
+        return str(self.__class__) + ": " + str(self.__dict__)
+
     id = Column(Integer, primary_key=True)
     event_id = Column(Integer, ForeignKey("event.id"))
     start = Column(TIMESTAMP)
@@ -49,6 +57,10 @@ class EventDuration(Base):
 
 class UserEvent(Base):
     __tablename__ = "user_event"
+
+    def __str__(self):
+        return str(self.__class__) + ": " + str(self.__dict__)
+
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"))
     event_id = Column(Integer, ForeignKey("event.id"))
@@ -61,6 +73,10 @@ class UserEvent(Base):
 
 class User(Base):
     __tablename__ = "user"
+
+    def __str__(self):
+        return str(self.__class__) + ": " + str(self.__dict__)
+
     id = Column(Integer, primary_key=True)
     first_name = Column(String)
     last_name = Column(String)
@@ -75,12 +91,20 @@ class User(Base):
 
 class Tag(Base):
     __tablename__ = "tag"
+
+    def __str__(self):
+        return str(self.__class__) + ": " + str(self.__dict__)
+
     id = Column(Integer, primary_key=True)
     name = Column(String)
 
 
 class EventTag(Base):
     __tablename__ = "event_tag"
+
+    def __str__(self):
+        return str(self.__class__) + ": " + str(self.__dict__)
+
     id = Column(Integer, primary_key=True)
     event_id = Column(Integer, ForeignKey("event.id"))
     tag_id = Column(Integer, ForeignKey("tag.id"))
@@ -88,12 +112,20 @@ class EventTag(Base):
 
 class Facility(Base):
     __tablename__ = "facility"
+
+    def __str__(self):
+        return str(self.__class__) + ": " + str(self.__dict__)
+
     id = Column(Integer, primary_key=True)
     name = Column(String)
 
 
 class FacilityRequest(Base):
     __tablename__ = "facility_request"
+
+    def __str__(self):
+        return str(self.__class__) + ": " + str(self.__dict__)
+
     id = Column(Integer, primary_key=True)
     event_id = Column(Integer, ForeignKey("event.id"))
     facility_id = Column(Integer, ForeignKey("facility.id"))
@@ -101,6 +133,10 @@ class FacilityRequest(Base):
 
 class Answer(Base):
     __tablename__ = "answer"
+
+    def __str__(self):
+        return str(self.__class__) + ": " + str(self.__dict__)
+
     id = Column(Integer, primary_key=True)
     user_event_id = Column(Integer, ForeignKey("user_event.id"))
     question_id = Column(Integer, ForeignKey("question.id"))
@@ -109,6 +145,10 @@ class Answer(Base):
 
 class Question(Base):
     __tablename__ = "question"
+
+    def __str__(self):
+        return str(self.__class__) + ": " + str(self.__dict__)
+
     id = Column(Integer, primary_key=True)
     question_group_id = Column(Integer, ForeignKey("question_group.id"))
     seq = Column(Integer)
@@ -122,6 +162,10 @@ class Question(Base):
 
 class Location(Base):
     __tablename__ = "location"
+
+    def __str__(self):
+        return str(self.__class__) + ": " + str(self.__dict__)
+
     id = Column(Integer, primary_key=True)
     name = Column(String)
     google_map_url = Column(String)
@@ -132,6 +176,10 @@ class Location(Base):
 
 class QuestionGroup(Base):
     __tablename__ = "question_group"
+
+    def __str__(self):
+        return str(self.__class__) + ": " + str(self.__dict__)
+
     id = Column(Integer, primary_key=True)
     event_id = Column(Integer, ForeignKey("event.id"))
     type = Column(

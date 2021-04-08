@@ -159,42 +159,53 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         finally:
             session.close()
 
-    def SubmitAnswerForPostEventQuestion(self, request, context):
+    def SubmitAnswersForPostEventQuestion(self, request, context):
         session = DBSession()
         try:
             answers = request.answers
+            question_ids = list(map(lambda answer: answer.question_id, answers))
             user_event_id = request.user_event_id
+            user_event = (
+                session.query(UserEvent).filter(UserEvent.id == user_event_id).scalar()
+            )
+            if user_event is None:
+                throwError("User Event not found.", grpc.StatusCode.NOT_FOUND, context)
 
-            new_answers = []
-
-            query_answers = session.query(Answer).filter(
-                Answer.user_event_id == user_event_id
+            query = (
+                session.query(Answer, Question, QuestionGroup)
+                .filter(
+                    Answer.question_id == Question.id,
+                    Question.question_group_id == QuestionGroup.id,
+                )
+                .filter(Answer.user_event_id == user_event_id)
+                .all()
             )
 
-            for answer in answers:
-                query_unique_answer = query_answers.filter(
-                    Answer.question_id == answer.question_id
-                )
-                if query_unique_answer.scalar() is None:
-                    new_answers.append(answer)
-
-            if not new_answers:
+            if query:
                 throwError(
-                    "User already gave feedback.",
+                    "User already submit the answers for this event.",
+                    grpc.StatusCode.ALREADY_EXISTS,
+                    context,
+                )
+
+            query_question = session.query(QuestionGroup, Question).filter(
+                Question.question_group_id == QuestionGroup.id,
+                QuestionGroup.event_id == user_event.event_id,
+                QuestionGroup.type == "POST_EVENT",
+            )
+
+            query_question_id = list(
+                map(lambda question: question.Question.id, query_question)
+            )
+
+            if not (set(query_question_id) == set(question_ids)):
+                throwError(
+                    "Invalid question for this event",
                     grpc.StatusCode.INVALID_ARGUMENT,
                     context,
                 )
 
-            query_user_event = (
-                session.query(UserEvent).filter(UserEvent.id == user_event_id).scalar()
-            )
-
-            if query_user_event is None:
-                throwError(
-                    "User Event not found.", grpc.StatusCode.INVALID_ARGUMENT, context
-                )
-
-            for answer in new_answers:
+            for answer in answers:
                 question_id = answer.question_id
                 question_answer = answer.value
                 new_answer = Answer(
@@ -204,6 +215,10 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 )
                 session.add(new_answer)
                 session.commit()
+
+            query_answers = session.query(Answer).filter(
+                Answer.user_event_id == user_event_id
+            )
 
             data = map(
                 lambda result: common.Answer(
@@ -215,7 +230,87 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 query_answers.all(),
             )
 
-            return participant_service.SubmitAnswerForPostEventQuestionResponse(
+            return participant_service.SubmitAnswerForEventQuestionResponse(
+                answers=data
+            )
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    def SubmitAnswersForPreEventQuestion(self, request, context):
+        session = DBSession()
+        try:
+            answers = request.answers
+            question_ids = list(map(lambda answer: answer.question_id, answers))
+            user_event_id = request.user_event_id
+            user_event = (
+                session.query(UserEvent).filter(UserEvent.id == user_event_id).scalar()
+            )
+            if user_event is None:
+                throwError("User Event not found.", grpc.StatusCode.NOT_FOUND, context)
+
+            query = (
+                session.query(Answer, Question, QuestionGroup)
+                .filter(
+                    Answer.question_id == Question.id,
+                    Question.question_group_id == QuestionGroup.id,
+                )
+                .filter(Answer.user_event_id == user_event_id)
+                .all()
+            )
+
+            if query:
+                throwError(
+                    "User already submit the answers for this event.",
+                    grpc.StatusCode.ALREADY_EXISTS,
+                    context,
+                )
+
+            query_question = session.query(QuestionGroup, Question).filter(
+                Question.question_group_id == QuestionGroup.id,
+                QuestionGroup.event_id == user_event.event_id,
+                QuestionGroup.type == "PRE_EVENT",
+            )
+
+            query_question_id = list(
+                map(lambda question: question.Question.id, query_question)
+            )
+
+            if not (set(query_question_id) == set(question_ids)):
+                throwError(
+                    "Invalid question for this event",
+                    grpc.StatusCode.INVALID_ARGUMENT,
+                    context,
+                )
+
+            for answer in answers:
+                question_id = answer.question_id
+                question_answer = answer.value
+                new_answer = Answer(
+                    user_event_id=user_event_id,
+                    question_id=question_id,
+                    value=question_answer,
+                )
+                session.add(new_answer)
+                session.commit()
+
+            query_answers = session.query(Answer).filter(
+                Answer.user_event_id == user_event_id
+            )
+
+            data = map(
+                lambda result: common.Answer(
+                    id=result.id,
+                    user_event_id=result.user_event_id,
+                    question_id=result.question_id,
+                    value=result.value,
+                ),
+                query_answers.all(),
+            )
+
+            return participant_service.SubmitAnswerForEventQuestionResponse(
                 answers=data
             )
         except:
