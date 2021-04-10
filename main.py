@@ -436,13 +436,13 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         finally:
             session.close()
 
-    def GetEventsByTagId(self, request, context):
+    def GetEventsByTagIds(self, request, context):
         session = DBSession()
         try:
-            tag_id = request.id
+            tag_id = request.tag_ids
 
             query_event_tags = (
-                session.query(EventTag).filter(EventTag.tag_id == tag_id).all()
+                session.query(EventTag).filter(EventTag.tag_id.in_(tag_id)).all()
             )
 
             events_id = map(lambda event: event.id, query_event_tags)
