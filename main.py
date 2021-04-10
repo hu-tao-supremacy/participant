@@ -159,42 +159,65 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         finally:
             session.close()
 
-    def SubmitAnswerForPostEventQuestion(self, request, context):
+    def SubmitAnswersForEventQuestion(self, request, context):
         session = DBSession()
         try:
             answers = request.answers
-            user_event_id = request.user_event_id
+            question_ids = list(map(lambda answer: answer.question_id, answers))
 
-            new_answers = []
-
-            query_answers = session.query(Answer).filter(
-                Answer.user_event_id == user_event_id
-            )
-
-            for answer in answers:
-                query_unique_answer = query_answers.filter(
-                    Answer.question_id == answer.question_id
-                )
-                if query_unique_answer.scalar() is None:
-                    new_answers.append(answer)
-
-            if not new_answers:
+            if request.type == 1:
+                question_type = "POST_EVENT"
+            elif request.type == 2:
+                question_type = "PRE_EVENT"
+            else:
                 throwError(
-                    "User already gave feedback.",
+                    "Please select type; 1 = POST, 2 = PRE.",
                     grpc.StatusCode.INVALID_ARGUMENT,
                     context,
                 )
 
-            query_user_event = (
+            user_event_id = request.user_event_id
+            user_event = (
                 session.query(UserEvent).filter(UserEvent.id == user_event_id).scalar()
             )
+            if user_event is None:
+                throwError("User Event not found.", grpc.StatusCode.NOT_FOUND, context)
 
-            if query_user_event is None:
+            query = (
+                session.query(Answer, Question, QuestionGroup)
+                .filter(
+                    Answer.question_id == Question.id,
+                    Question.question_group_id == QuestionGroup.id,
+                )
+                .filter(Answer.user_event_id == user_event_id)
+                .all()
+            )
+
+            if query:
                 throwError(
-                    "User Event not found.", grpc.StatusCode.INVALID_ARGUMENT, context
+                    "User already submit the answers for this event.",
+                    grpc.StatusCode.ALREADY_EXISTS,
+                    context,
                 )
 
-            for answer in new_answers:
+            query_question = session.query(QuestionGroup, Question).filter(
+                Question.question_group_id == QuestionGroup.id,
+                QuestionGroup.event_id == user_event.event_id,
+                QuestionGroup.type == question_type,
+            )
+
+            query_question_id = list(
+                map(lambda question: question.Question.id, query_question)
+            )
+
+            if not (set(query_question_id) == set(question_ids)):
+                throwError(
+                    "Invalid question for this event",
+                    grpc.StatusCode.INVALID_ARGUMENT,
+                    context,
+                )
+
+            for answer in answers:
                 question_id = answer.question_id
                 question_answer = answer.value
                 new_answer = Answer(
@@ -204,6 +227,10 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 )
                 session.add(new_answer)
                 session.commit()
+
+            query_answers = session.query(Answer).filter(
+                Answer.user_event_id == user_event_id
+            )
 
             data = map(
                 lambda result: common.Answer(
@@ -215,7 +242,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 query_answers.all(),
             )
 
-            return participant_service.SubmitAnswerForPostEventQuestionResponse(
+            return participant_service.SubmitAnswerForEventQuestionResponse(
                 answers=data
             )
         except:
@@ -409,13 +436,13 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         finally:
             session.close()
 
-    def GetEventsByTagId(self, request, context):
+    def GetEventsByTagIds(self, request, context):
         session = DBSession()
         try:
-            tag_id = request.id
+            tag_id = request.tag_ids
 
             query_event_tags = (
-                session.query(EventTag).filter(EventTag.tag_id == tag_id).all()
+                session.query(EventTag).filter(EventTag.tag_id.in_(tag_id)).all()
             )
 
             events_id = map(lambda event: event.id, query_event_tags)
