@@ -166,9 +166,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             question_ids = list(map(lambda answer: answer.question_id, answers))
 
             if request.type == 1:
-                question_type = "POST_EVENT"
-            elif request.type == 2:
                 question_type = "PRE_EVENT"
+            elif request.type == 2:
+                question_type = "POST_EVENT"
             else:
                 throwError(
                     "Please select type; 1 = POST, 2 = PRE.",
