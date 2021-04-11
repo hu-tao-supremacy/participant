@@ -637,12 +637,13 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         finally:
             session.close()
 
-    def GetUserByEventId(self, request, context):
+    def GetUsersByEventId(self, request, context):
         session = DBSession()
         try:
             event_id = request.event_id
             status = request.status
             status_type = None
+            chosen_users = None
 
             if status == 1:
                 status_type = "PENDING"
@@ -651,43 +652,39 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             elif status == 3:
                 status_type = "REJECTED"
 
-            users_id = []
-            approved_user = []
-            
             query_user_events = (
-                session.query(UserEvent)
+                session.query(UserEvent, User)
+                .filter(UserEvent.user_id == User.id)
                 .filter(UserEvent.event_id == event_id, UserEvent.status == status_type)
                 .all()
             )
 
             if query_user_events:
-                for user_event in query_user_events:
-                    user_id = user_event.user_id
-                    users_id.append(user_id)
-                users = (
-                    session.query(User)
-                    .filter(or_(User.id == v for v in users_id))
-                    .all()
+                chosen_users = map(
+                    lambda user_event: common.User(
+                        id=user_event.User.id,
+                        first_name=user_event.User.first_name,
+                        last_name=user_event.User.last_name,
+                        email=user_event.User.email,
+                        nickname=getStringValue(user_event.User.nickname),
+                        chula_id=getStringValue(user_event.User.chula_id),
+                        address=getStringValue(user_event.User.address),
+                        profile_picture_url=getStringValue(
+                            user_event.User.profile_picture_url
+                        ),
+                        is_chula_student=user_event.User.is_chula_student,
+                        gender=user_event.User.gender,
+                        did_setup=user_event.User.did_setup,
+                        district=getStringValue(user_event.User.district),
+                        zip_code=getStringValue(user_event.User.zip_code),
+                        phone_number=getStringValue(user_event.User.phone_number),
+                        province=getStringValue(user_event.User.province),
+                        academic_year=getInt32Value(user_event.User.academic_year),
+                    ),
+                    query_user_events,
                 )
-                if users:
-                    for user in users:
-                        approved_user.append(
-                            common.User(
-                                id=user.id,
-                                first_name=user.first_name,
-                                last_name=user.last_name,
-                                email=user.email,
-                                nickname=getStringValue(user.nickname),
-                                chula_id=getStringValue(user.chula_id),
-                                address=getStringValue(user.address),
-                                profile_picture_url=getStringValue(
-                                    user.profile_picture_url
-                                ),
-                                is_chula_student=user.is_chula_student,
-                                gender=user.gender,
-                            )
-                        )
-            return participant_service.GetUserByEventIdResponse(users=approved_user)
+
+            return participant_service.GetUsersByEventIdResponse(users=chosen_users)
         except:
             session.rollback()
             raise

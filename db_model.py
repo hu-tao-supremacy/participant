@@ -83,10 +83,16 @@ class User(Base):
     email = Column(String)
     nickname = Column(String, nullable=True)
     chula_id = Column(String, nullable=True)
-    address = Column(String, nullable=True)
-    profile_picture_url = Column(String, nullable=True)
     is_chula_student = Column(Boolean)
     gender = Column(Enum("M", "F", "NS", name="gender_enum", create_type=False))
+    address = Column(String, nullable=True)
+    profile_picture_url = Column(String, nullable=True)
+    did_setup = Column(Boolean)
+    district = Column(String, nullable=True)
+    zip_code = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True)
+    province = Column(String, nullable=True)
+    academic_year = Column(Integer, nullable=True)
 
 
 class Tag(Base):
