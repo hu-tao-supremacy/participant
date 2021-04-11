@@ -312,6 +312,20 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         finally:
             session.close()
 
+    def GetTagById(self, request, context):
+        session = DBSession()
+        try:
+            query_tag = session.query(Tag).filter(Tag.id == request.id).scalar()
+
+            if query_tag:
+                return common.Tag(id=query_tag.id, name=query_tag.name)
+            throwError("Tag not found", grpc.StatusCode.NOT_FOUND, context)
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
     def GetAllTags(self, request, context):
         session = DBSession()
         try:
