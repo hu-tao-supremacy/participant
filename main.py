@@ -607,7 +607,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 tag = session.query(Tag).filter(Tag.id == tag_id).scalar()
                 if tag is not None:
                     tags_of_event.append(common.Tag(id=tag.id, name=tag.name))
-            return participant_service.GetTagsByEventIdResponse(tags=tags_of_event)
+            return participant_service.TagsResponse(tags=tags_of_event)
         except:
             session.rollback()
             raise
