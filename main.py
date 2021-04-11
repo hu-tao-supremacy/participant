@@ -637,16 +637,26 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         finally:
             session.close()
 
-    def GetApprovedUserByEventId(self, request, context):
+    def GetUserByEventId(self, request, context):
         session = DBSession()
         try:
-            event_id = request.id
+            event_id = request.event_id
+            status = request.status
+            status_type = None
+
+            if status == 1:
+                status_type = "PENDING"
+            elif status == 2:
+                status_type = "APPROVED"
+            elif status == 3:
+                status_type = "REJECTED"
+
             users_id = []
             approved_user = []
-
+            
             query_user_events = (
                 session.query(UserEvent)
-                .filter(UserEvent.event_id == event_id, UserEvent.status == "APPROVED")
+                .filter(UserEvent.event_id == event_id, UserEvent.status == status_type)
                 .all()
             )
 
@@ -677,9 +687,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                                 gender=user.gender,
                             )
                         )
-            return participant_service.GetApprovedUserByEventIdResponse(
-                users=approved_user
-            )
+            return participant_service.GetUserByEventIdResponse(users=approved_user)
         except:
             session.rollback()
             raise
