@@ -210,8 +210,10 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 map(lambda question: question.Question.id, query_question)
             )
 
-            print("expect " + query_question_id)
-            print("got " + question_ids)
+            print("expect ")
+            print(query_question_id)
+            print("got ")
+            print(question_ids)
             if not (set(query_question_id) == set(question_ids)):
                 throwError(
                     "Invalid question for this event",
