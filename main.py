@@ -810,22 +810,53 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             answers = []
 
             query_answers = (
-                session.query(Answer).filter(Answer.question_id == question_id).all()
+                session.query(Answer)
+                .filter(Answer.question_id == question_id)
+                .all()
             )
 
-            if query_answers is None:
-                return participant_service.GetAnswersByQuestionIdResponse(answers=[])
-
-            for answer_query in query_answers:
-                answers.append(
-                    common.Answer(
-                        id=answer_query.id,
-                        user_event_id=answer_query.user_event_id,
-                        question_id=answer_query.question_id,
-                        value=answer_query.value,
-                    )
+            if query_answers:
+                answers = map(
+                    lambda answer: common.Answer(
+                        id=answer.id,
+                        user_event_id=answer.user_event_id,
+                        question_id=answer.question_id,
+                        value=answer.value,
+                    ),
+                    query_answers,
                 )
-            return participant_service.GetAnswersByQuestionIdResponse(answers=answers)
+
+            return participant_service.AnswersResponse(answers=answers)
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    def GetAnswersByUserEventId(self, request, context):
+        session = DBSession()
+        try:
+            user_event_id = request.id
+            answers = []
+
+            query_answers = (
+                session.query(Answer)
+                .filter(Answer.user_event_id == user_event_id)
+                .all()
+            )
+
+            if query_answers:
+                answers = map(
+                    lambda answer: common.Answer(
+                        id=answer.id,
+                        user_event_id=answer.user_event_id,
+                        question_id=answer.question_id,
+                        value=answer.value,
+                    ),
+                    query_answers,
+                )
+
+            return participant_service.AnswersResponse(answers=answers)
         except:
             session.rollback()
             raise
