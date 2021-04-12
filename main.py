@@ -876,49 +876,20 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         try:
             user_id = request.user_id
             event_id = request.event_id
-            status = request.status
-            status_type = None
 
-            if status == 1:
-                status_type = "PENDING"
-            elif status == 2:
-                status_type = "APPROVED"
-            elif status == 3:
-                status_type = "REJECTED"
-
-            if status_type is not None:
-                query_user_event_with_status = session.query(UserEvent).filter(
-                    UserEvent.user_id == user_id,
-                    UserEvent.event_id == event_id,
-                    UserEvent.status == status_type,
+            query_user_event = session.query(UserEvent).filter(
+                UserEvent.user_id == user_id, UserEvent.event_id == event_id
+            )
+            if query_user_event.scalar():
+                user_event = query_user_event.scalar()
+                return common.UserEvent(
+                    id=user_event.id,
+                    user_id=user_event.user_id,
+                    event_id=user_event.event_id,
+                    rating=getInt32Value(user_event.rating),
+                    ticket=getStringValue(user_event.ticket),
+                    status=user_event.status,
                 )
-
-                a = query_user_event_with_status.scalar()
-
-                if query_user_event_with_status.scalar():
-                    user_event = query_user_event_with_status.scalar()
-                    return common.UserEvent(
-                        id=user_event.id,
-                        user_id=user_event.user_id,
-                        event_id=user_event.event_id,
-                        rating=getInt32Value(user_event.rating),
-                        ticket=getStringValue(user_event.ticket),
-                        status=user_event.status,
-                    )
-            else:
-                query_user_event = session.query(UserEvent).filter(
-                    UserEvent.user_id == user_id, UserEvent.event_id == event_id
-                )
-                if query_user_event.scalar():
-                    user_event = query_user_event.scalar()
-                    return common.UserEvent(
-                        id=user_event.id,
-                        user_id=user_event.user_id,
-                        event_id=user_event.event_id,
-                        rating=getInt32Value(user_event.rating),
-                        ticket=getStringValue(user_event.ticket),
-                        status=user_event.status,
-                    )
             throwError("User Event not found", grpc.StatusCode.NOT_FOUND, context)
         except:
             session.rollback()
