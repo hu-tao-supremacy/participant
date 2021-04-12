@@ -965,6 +965,35 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         finally:
             session.close()
 
+    def GetUserEventsByEventId(self, request, context):
+        session = DBSession()
+        try:
+            event_id = request.id
+
+            query_user_event = (
+                session.query(UserEvent).filter(UserEvent.event_id == event_id).all()
+            )
+
+            chosen_user_events = map(
+                lambda user_event: common.UserEvent(
+                    id=user_event.id,
+                    user_id=user_event.user_id,
+                    event_id=user_event.event_id,
+                    rating=getInt32Value(user_event.rating),
+                    ticket=getStringValue(user_event.ticket),
+                    status=user_event.status,
+                ),
+                query_user_event,
+            )
+            return participant_service.GetUserEventsByEventIdResponse(
+                user_events=chosen_user_events
+            )
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
     def GenerateQR(self, request, context):
         session = DBSession()
         try:
