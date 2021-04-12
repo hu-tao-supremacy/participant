@@ -181,7 +181,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 session.query(UserEvent).filter(UserEvent.id == user_event_id).scalar()
             )
             if user_event is None:
-                throwError("User Event not found.", grpc.StatusCode.NOT_FOUND, context)
+                throwError("Did not find any user_event for ID " + str(user_event_id) + ".", grpc.StatusCode.NOT_FOUND, context)
 
             query = (
                 session.query(Answer, Question, QuestionGroup)
