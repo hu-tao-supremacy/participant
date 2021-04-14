@@ -69,6 +69,7 @@ class UserEvent(Base):
     status = Column(
         Enum("PENDING", "APPROVED", "REJECTED", name="status_enum", create_type=False)
     )
+    is_internal = Column(Boolean)
 
 
 class User(Base):
