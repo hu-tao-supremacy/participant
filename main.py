@@ -91,11 +91,13 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 rating=None,
                 ticket=None,
                 status="PENDING",
+                is_internal=False
             )
             session.add(new_user_event)
             session.commit()
 
             added_user_event = query_user_event.scalar()
+
             if added_user_event:
                 return common.UserEvent(
                     id=added_user_event.id,
@@ -104,6 +106,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     rating=getInt32Value(added_user_event.rating),
                     ticket=getStringValue(added_user_event.ticket),
                     status=added_user_event.status,
+                    is_internal=added_user_event.is_internal,
                 )
             throwError(
                 "Database didn't update User Event.", grpc.StatusCode.INTERNAL, context
@@ -810,9 +813,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             answers = []
 
             query_answers = (
-                session.query(Answer)
-                .filter(Answer.question_id == question_id)
-                .all()
+                session.query(Answer).filter(Answer.question_id == question_id).all()
             )
 
             if query_answers:
@@ -920,6 +921,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     rating=getInt32Value(user_event.rating),
                     ticket=getStringValue(user_event.ticket),
                     status=user_event.status,
+                    is_internal=user_event.is_internal,
                 )
             throwError("User Event not found", grpc.StatusCode.NOT_FOUND, context)
         except:
@@ -984,6 +986,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     rating=getInt32Value(user_event.rating),
                     ticket=getStringValue(user_event.ticket),
                     status=user_event.status,
+                    is_internal=user_event.is_internal,
                 ),
                 query_user_event,
             )
