@@ -91,7 +91,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 rating=None,
                 ticket=None,
                 status="PENDING",
-                is_internal=False
+                is_internal=False,
             )
             session.add(new_user_event)
             session.commit()
@@ -993,6 +993,36 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             return participant_service.GetUserEventsByEventIdResponse(
                 user_events=chosen_user_events
             )
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    def SetRatingByUserEventId(self, request, context):
+        session = DBSession()
+        try:
+            user_event_id = request.user_event_id
+            rating = request.rating
+
+            query_user_event = (
+                session.query(UserEvent).filter(UserEvent.id == user_event_id).scalar()
+            )
+
+            if query_user_event:
+                query_user_event.rating = rating
+                session.commit()
+                return common.UserEvent(
+                    id=query_user_event.id,
+                    user_id=query_user_event.user_id,
+                    event_id=query_user_event.event_id,
+                    rating=getInt32Value(query_user_event.rating),
+                    ticket=getStringValue(query_user_event.ticket),
+                    status=query_user_event.status,
+                    is_internal=query_user_event.is_internal,
+                )
+            throwError("User Event not found", grpc.StatusCode.NOT_FOUND, context)
+
         except:
             session.rollback()
             raise
