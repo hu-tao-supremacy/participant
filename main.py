@@ -209,14 +209,20 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 QuestionGroup.type == question_type,
             )
 
+            query_required_question = query_question.filter(Question.is_optional == False)
+
             query_question_id = list(
                 map(lambda question: question.Question.id, query_question)
             )
+            query_required_question_id = list(
+                map(lambda question: question.Question.id, query_required_question)
+            )
 
-            print("expect: " + str(query_question_id) + " got " + str(question_ids))
-            if not (set(query_question_id) == set(question_ids)):
+            print("expect: " + str(query_question_id) + " or " + str(query_required_question_id)+ " got " + str(question_ids))
+            
+            if not (set(query_required_question_id).issubset(set(question_ids)) and set(query_question_id).issuperset(set(question_ids))):
                 throwError(
-                    "expect: " + str(query_question_id) + " got " + str(question_ids),
+                    "expect: " + str(query_question_id) + " or " + str(query_required_question_id)+ " got " + str(question_ids),
                     grpc.StatusCode.INVALID_ARGUMENT,
                     context,
                 )
