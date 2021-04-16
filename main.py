@@ -89,7 +89,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 user_id=user_id,
                 event_id=event_id,
                 rating=None,
-                ticket=None,
+                ticket="CA946D",
                 status="APPROVED",
                 is_internal=False,
             )
