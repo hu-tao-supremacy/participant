@@ -41,6 +41,7 @@ class Event(Base):
     profile_image_hash = Column(String, nullable=True)
     attendee_limit = Column(Integer)
     contact = Column(String, nullable=True)
+    registration_due_date = Column(TIMESTAMP, nullable=True)
 
 
 class EventDuration(Base):
