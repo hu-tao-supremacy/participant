@@ -1,4 +1,5 @@
 from google.protobuf import wrappers_pb2 as wrapper
+from google.protobuf.timestamp_pb2 import Timestamp
 import base64
 import random
 import grpc
@@ -13,6 +14,12 @@ def getInt32Value(value):
     temp = wrapper.Int32Value()
     temp.value = value
     return temp
+
+
+def getTimeStamp(data):
+    timestamp = Timestamp()
+    timestamp.FromDatetime(data)
+    return timestamp
 
 
 def b64encode(data):

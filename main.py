@@ -28,6 +28,7 @@ from helper import (
     getRandomNumber,
     throwError,
     getEventsByIds,
+    getTimeStamp,
 )
 from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -52,8 +53,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             if query_event_duration is None:
                 throwError("Event not found.", grpc.StatusCode.NOT_FOUND, context)
 
-            timestamp = Timestamp()
-            timestamp.FromDatetime(query_event_duration.start)
+            timestamp = getTimeStamp(query_event_duration.start)
             boolvalue = BoolValue()
 
             if timestamp.seconds > date.seconds:
@@ -149,6 +149,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     profile_image_hash=getStringValue(event.profile_image_hash),
                     attendee_limit=event.attendee_limit,
                     contact=getStringValue(event.contact),
+                    registration_due_date=getTimeStamp(event.registration_due_date),
                 )
 
             throwError(
@@ -300,6 +301,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     profile_image_hash=getStringValue(query_event.profile_image_hash),
                     attendee_limit=query_event.attendee_limit,
                     contact=getStringValue(query_event.contact),
+                    registration_due_date=getTimeStamp(
+                        query_event.registration_due_date
+                    ),
                 )
 
             throwError("Event not found.", grpc.StatusCode.NOT_FOUND, context)
@@ -329,6 +333,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     profile_image_hash=getStringValue(event.profile_image_hash),
                     attendee_limit=event.attendee_limit,
                     contact=getStringValue(event.contact),
+                    registration_due_date=getTimeStamp(event.registration_due_date),
                 ),
                 query_events,
             )
@@ -401,6 +406,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                             ),
                             attendee_limit=query_event.attendee_limit,
                             contact=getStringValue(query_event.contact),
+                            registration_due_date=getTimeStamp(
+                                query_event.registration_due_date
+                            ),
                         )
                     )
 
@@ -466,6 +474,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     profile_image_hash=getStringValue(event.profile_image_hash),
                     attendee_limit=event.attendee_limit,
                     contact=getStringValue(event.contact),
+                    registration_due_date=getTimeStamp(event.registration_due_date),
                 ),
                 results,
             )
@@ -547,6 +556,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     profile_image_hash=getStringValue(event.profile_image_hash),
                     attendee_limit=event.attendee_limit,
                     contact=getStringValue(event.contact),
+                    registration_due_date=getTimeStamp(event.registration_due_date),
                 ),
                 query_events,
             )
@@ -732,16 +742,12 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
 
             if query_event_durations:
                 for event_duration in query_event_durations:
-                    start_timestamp = Timestamp()
-                    finish_timestamp = Timestamp()
-                    start_timestamp.FromDatetime(event_duration.start)
-                    finish_timestamp.FromDatetime(event_duration.finish)
                     event_durations.append(
                         common.EventDuration(
                             id=event_duration.id,
                             event_id=event_duration.event_id,
-                            start=start_timestamp,
-                            finish=finish_timestamp,
+                            start=getTimeStamp(event_duration.start),
+                            finish=getTimeStamp(event_duration.finish),
                         )
                     )
             return participant_service.GetEventDurationsByEventIdResponse(
@@ -980,6 +986,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     profile_image_hash=getStringValue(event.Event.profile_image_hash),
                     attendee_limit=event.Event.attendee_limit,
                     contact=getStringValue(event.Event.contact),
+                    registration_due_date=getTimeStamp(event.registration_due_date),
                 ),
                 query_user_events,
             )
