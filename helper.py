@@ -17,6 +17,8 @@ def getInt32Value(value):
 
 
 def getTimeStamp(data):
+    if data is None:
+        return None
     timestamp = Timestamp()
     timestamp.FromDatetime(data)
     return timestamp
