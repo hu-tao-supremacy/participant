@@ -617,6 +617,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     travel_information_image_hash=getStringValue(
                         query_location.travel_information_image_hash
                     ),
+                    is_online=query_location.is_online,
                 )
             throwError(
                 "No location found with given location_id",

@@ -180,6 +180,7 @@ class Location(Base):
     description = Column(String, nullable=True)
     travel_information_image_url = Column(String, nullable=True)
     travel_information_image_hash = Column(String, nullable=True)
+    is_online = Column(Boolean)
 
 
 class QuestionGroup(Base):
