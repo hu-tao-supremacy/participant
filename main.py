@@ -89,8 +89,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 user_id=user_id,
                 event_id=event_id,
                 rating=None,
-                ticket="CA946D",
-                status="APPROVED",
+                ticket=None,
+                status="PENDING",
                 is_internal=False,
             )
             session.add(new_user_event)
@@ -475,7 +475,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     profile_image_hash=getStringValue(event.Event.profile_image_hash),
                     attendee_limit=event.Event.attendee_limit,
                     contact=getStringValue(event.Event.contact),
-                    registration_due_date=getTimeStamp(event.Event.registration_due_date),
+                    registration_due_date=getTimeStamp(
+                        event.Event.registration_due_date
+                    ),
                 ),
                 query_events,
             )
