@@ -533,7 +533,7 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 session.query(EventTag).filter(EventTag.tag_id.in_(tag_id)).all()
             )
 
-            events_id = map(lambda event: event.id, query_event_tags)
+            events_id = map(lambda event_tag: event_tag.event_id, query_event_tags)
 
             tag_events = getEventsByIds(events_id=events_id, session=session)
 
