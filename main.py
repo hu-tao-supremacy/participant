@@ -34,6 +34,7 @@ from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
 from google.protobuf.wrappers_pb2 import BoolValue
 from sqlalchemy import func, or_
+import random
 
 
 class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
@@ -1025,7 +1026,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                     profile_image_hash=getStringValue(event.Event.profile_image_hash),
                     attendee_limit=event.Event.attendee_limit,
                     contact=getStringValue(event.Event.contact),
-                    registration_due_date=getTimeStamp(event.registration_due_date),
+                    registration_due_date=getTimeStamp(
+                        event.Event.registration_due_date
+                    ),
                 ),
                 query_user_events,
             )
@@ -1062,6 +1065,54 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             return participant_service.GetUserEventsByEventIdResponse(
                 user_events=chosen_user_events
             )
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    def GetPastEventsFromTags(self, request, context):
+        session = DBSession()
+        try:
+            tag_id = request.tag_id
+            number_of_events = request.number_of_events
+
+            query_events = (
+                session.query(Event)
+                .join(EventTag)
+                .filter(EventTag.tag_id.in_(tag_id))
+                .all()
+            )
+
+            random_number = random.randint(0, len(query_events) - number_of_events)
+
+            if len(query_events) > number_of_events:
+                query_events = query_events[
+                    random_number : random_number + number_of_events
+                ]
+
+            events = map(
+                lambda event: common.Event(
+                    id=event.id,
+                    organization_id=event.organization_id,
+                    location_id=getInt32Value(event.location_id),
+                    description=event.description,
+                    name=event.name,
+                    cover_image_url=getStringValue(event.cover_image_url),
+                    cover_image_hash=getStringValue(event.cover_image_hash),
+                    poster_image_url=getStringValue(event.poster_image_url),
+                    poster_image_hash=getStringValue(event.poster_image_hash),
+                    profile_image_url=getStringValue(event.profile_image_url),
+                    profile_image_hash=getStringValue(event.profile_image_hash),
+                    attendee_limit=event.attendee_limit,
+                    contact=getStringValue(event.contact),
+                    registration_due_date=getTimeStamp(event.registration_due_date),
+                ),
+                query_events,
+            )
+
+            return participant_service.EventsResponse(event=events)
+
         except:
             session.rollback()
             raise
