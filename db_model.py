@@ -30,7 +30,7 @@ class Event(Base):
 
     id = Column(Integer, primary_key=True)
     organization_id = Column(Integer, ForeignKey("organization.id"))
-    location_id = Column(Integer, ForeignKey("locatoin.id"), nullable=True)
+    location_id = Column(Integer, ForeignKey("location.id"), nullable=True)
     description = Column(String)
     name = Column(String)
     cover_image_url = Column(String, nullable=True)
