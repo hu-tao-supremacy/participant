@@ -676,9 +676,11 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             tags_id = []
             tags_of_event = []
 
-            tags = session.query(EventTag).filter(EventTag.event_id == event_id).all()
-            for tag in tags:
-                tags_id.append(tag.id)
+            event_tags = (
+                session.query(EventTag).filter(EventTag.event_id == event_id).all()
+            )
+            for event_tag in event_tags:
+                tags_id.append(event_tag.tag_id)
 
             for tag_id in tags_id:
                 tag = session.query(Tag).filter(Tag.id == tag_id).scalar()
