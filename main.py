@@ -1086,9 +1086,8 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 .all()
             )
 
-            random_number = random.randint(0, len(query_events) - number_of_events)
-
             if len(query_events) > number_of_events:
+                random_number = random.randint(0, len(query_events) - number_of_events)
                 query_events = query_events[
                     random_number : random_number + number_of_events
                 ]
