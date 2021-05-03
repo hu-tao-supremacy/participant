@@ -68,7 +68,7 @@ class UserEvent(Base):
     rating = Column(Integer, nullable=True)
     ticket = Column(String, nullable=True)
     status = Column(
-        Enum("PENDING", "APPROVED", "REJECTED", name="status_enum", create_type=False)
+        Enum("PENDING", "APPROVED", "REJECTED", "ATTENDED", name="status_enum", create_type=False)
     )
     is_internal = Column(Boolean)
 
