@@ -996,7 +996,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             selected_user_event_id = []
 
             query_user_events = (
-                session.query(UserEvent).filter(UserEvent.user_id == user_id).all()
+                session.query(UserEvent)
+                .filter(UserEvent.user_id == user_id, UserEvent.is_internal == False)
+                .all()
             )
 
             selected_user_event_id = map(
@@ -1034,7 +1036,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             event_id = request.event_id
 
             query_user_event = session.query(UserEvent).filter(
-                UserEvent.user_id == user_id, UserEvent.event_id == event_id
+                UserEvent.user_id == user_id,
+                UserEvent.event_id == event_id,
+                UserEvent.is_internal == False,
             )
             if query_user_event.scalar():
                 user_event = query_user_event.scalar()
@@ -1102,7 +1106,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             event_id = request.id
 
             query_user_event = (
-                session.query(UserEvent).filter(UserEvent.event_id == event_id).all()
+                session.query(UserEvent)
+                .filter(UserEvent.event_id == event_id, UserEvent.is_internal == False)
+                .all()
             )
 
             chosen_user_events = map(
@@ -1180,7 +1186,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             rating = request.rating
 
             query_user_event = (
-                session.query(UserEvent).filter(UserEvent.id == user_event_id).scalar()
+                session.query(UserEvent)
+                .filter(UserEvent.id == user_event_id, UserEvent.is_internal == False)
+                .scalar()
             )
 
             if query_user_event:
