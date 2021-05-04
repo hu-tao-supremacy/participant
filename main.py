@@ -191,10 +191,13 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             query = (
                 session.query(Answer, Question, QuestionGroup)
                 .filter(
-                    QuestionGroup.type == question_type,
+                    Question.question_group_id == QuestionGroup.id,
                     Answer.question_id == Question.id,
                 )
-                .filter(Answer.user_event_id == user_event_id)
+                .filter(
+                    Answer.user_event_id == user_event_id,
+                    QuestionGroup.type == question_type,
+                )
                 .all()
             )
 
