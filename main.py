@@ -545,9 +545,11 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         try:
             text = request.text.lower()
             if text == "":
-                query_all_events = session.query(Event).all()
-                return participant_service.EventsResponse(event=query_all_events)
-            results = session.query(Event).filter(func.lower(Event.name).contains(text))
+                results = session.query(Event).all()
+            else:
+                results = session.query(Event).filter(
+                    func.lower(Event.name).contains(text)
+                )
 
             events = map(
                 lambda event: common.Event(
