@@ -870,6 +870,9 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
                 session.query(Question).filter(Question.id == question_id).scalar()
             )
 
+            if query_question is None:
+                throwError("No Question found", grpc.StatusCode.NOT_FOUND, context)
+
             return common.Question(
                 id=query_question.id,
                 question_group_id=query_question.question_group_id,
