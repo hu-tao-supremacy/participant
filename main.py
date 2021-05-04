@@ -790,7 +790,11 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
             query_user_events = (
                 session.query(UserEvent, User)
                 .filter(UserEvent.user_id == User.id)
-                .filter(UserEvent.event_id == event_id, UserEvent.status == status_type)
+                .filter(
+                    UserEvent.event_id == event_id,
+                    UserEvent.status == status_type,
+                    UserEvent.is_internal == False,
+                )
                 .all()
             )
 
