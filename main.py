@@ -861,6 +861,31 @@ class ParticipantService(participant_service_grpc.ParticipantServiceServicer):
         finally:
             session.close()
 
+    def GetQuestionById(self, request, context):
+        session = DBSession()
+        try:
+            question_id = request.id
+
+            query_question = (
+                session.query(Question).filter(Question.id == question_id).scalar()
+            )
+
+            return common.Question(
+                id=query_question.id,
+                question_group_id=query_question.question_group_id,
+                seq=query_question.seq,
+                answer_type=query_question.answer_type,
+                is_optional=query_question.is_optional,
+                title=query_question.title,
+                subtitle=query_question.subtitle,
+            )
+
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
     def GetQuestionGroupsByEventId(self, request, context):
         session = DBSession()
         try:
